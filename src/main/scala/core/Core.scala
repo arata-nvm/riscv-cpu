@@ -9,12 +9,11 @@ class Core(suppressLog: Boolean) extends Module {
   val io = IO(new Bundle {
     val imem = Flipped(new ImemPortIo())
     val dmem = Flipped(new DmemPortIo())
+    val regfile = Flipped(new RegFileIo())
+    val csrfile = Flipped(new CsrFileIo())
     val exit = Output(Bool())
     val gp = Output(UInt(WORD_LEN.W))
   })
-
-  val regfile = Mem(32, UInt(WORD_LEN.W))
-  val csr_regfile = Mem(4096, UInt(WORD_LEN.W))
 
   val if_inst_id = RegInit(0.U(WORD_LEN.W))
   val id_inst_id = RegInit(~0.U(WORD_LEN.W))
@@ -81,7 +80,7 @@ class Core(suppressLog: Boolean) extends Module {
     Seq(
       exe_br_flg -> exe_br_target,
       exe_jmp_flg -> exe_alu_out,
-      (if_inst === ECALL) -> csr_regfile(CSR_ADDR_MTVEC),
+      (if_inst === ECALL) -> io.csrfile.mtvec,
       if_stall_flg -> if_reg_pc
     )
   )
@@ -123,18 +122,20 @@ class Core(suppressLog: Boolean) extends Module {
   val id_wb_addr = id_inst(11, 7)
 
   val mem_wb_data = Wire(UInt(WORD_LEN.W))
+  io.regfile.rs1_addr := id_rs1_addr
   val id_rs1_data =
     MuxCase(
-      regfile(id_rs1_addr),
+      io.regfile.rs1_data,
       Seq(
         (id_rs1_addr === 0.U) -> 0.U(WORD_LEN.W),
         (id_rs1_addr === mem_reg_wb_addr && mem_reg_rf_wen === REN_S) -> mem_wb_data,
         (id_rs1_addr === wb_reg_wb_addr && wb_reg_rf_wen === REN_S) -> wb_reg_wb_data
       )
     )
+  io.regfile.rs2_addr := id_rs2_addr
   val id_rs2_data =
     MuxCase(
-      regfile(id_rs2_addr),
+      io.regfile.rs2_data,
       Seq(
         (id_rs2_addr === 0.U) -> 0.U(WORD_LEN.W),
         (id_rs2_addr === mem_reg_wb_addr && mem_reg_rf_wen === REN_S) -> mem_wb_data,
@@ -323,20 +324,9 @@ class Core(suppressLog: Boolean) extends Module {
   io.dmem.wen := mem_reg_mem_wen
   io.dmem.wdata := mem_reg_rs2_data
 
-  val mem_csr_rdata = csr_regfile(mem_reg_csr_addr)
-  val mem_csr_wdata = MuxCase(
-    0.U(WORD_LEN.W),
-    Seq(
-      (mem_reg_csr_cmd === CSR_W) -> mem_reg_op1_data,
-      (mem_reg_csr_cmd === CSR_S) -> (mem_csr_rdata | mem_reg_op1_data),
-      (mem_reg_csr_cmd === CSR_C) -> (mem_csr_rdata & ~mem_reg_op1_data),
-      (mem_reg_csr_cmd === CSR_E) -> 11.U(WORD_LEN.W)
-    )
-  )
-
-  when(mem_reg_csr_cmd > 0.U) {
-    csr_regfile(mem_reg_csr_addr) := mem_csr_wdata
-  }
+  io.csrfile.cmd := mem_reg_csr_cmd
+  io.csrfile.addr := mem_reg_csr_addr
+  io.csrfile.wdata := mem_reg_op1_data
 
   val mem_pc_plus4 = mem_reg_pc + 4.U(WORD_LEN.W)
   mem_wb_data := MuxCase(
@@ -344,7 +334,7 @@ class Core(suppressLog: Boolean) extends Module {
     Seq(
       (mem_reg_wb_sel === WB_MEM) -> io.dmem.rdata,
       (mem_reg_wb_sel === WB_PC) -> mem_pc_plus4,
-      (mem_reg_wb_sel === WB_CSR) -> mem_csr_rdata
+      (mem_reg_wb_sel === WB_CSR) -> io.csrfile.rdata
     )
   )
 
@@ -357,13 +347,13 @@ class Core(suppressLog: Boolean) extends Module {
 
   // WB
 
-  when(wb_reg_rf_wen === REN_S) {
-    regfile(wb_reg_wb_addr) := wb_reg_wb_data
-  }
+  io.regfile.rd_wen := wb_reg_rf_wen === REN_S
+  io.regfile.rd_addr := wb_reg_wb_addr
+  io.regfile.rd_data := wb_reg_wb_data
 
   // Debug
 
-  io.gp := regfile(3)
+  io.gp := io.regfile.gp
   // io.exit := (id_reg_inst === UNIMP)
   io.exit := (mem_reg_pc === 0x44.U(WORD_LEN.W))
   if (!suppressLog) {

@@ -12,10 +12,14 @@ class Top(memoryFile: String, suppressLog: Boolean) extends Module {
     val gp = Output(UInt(WORD_LEN.W))
   })
 
+  val regfile = Module(new RegFile())
+  val csrfile = Module(new CsrFile())
   val core = Module(new Core(suppressLog))
   val memory = Module(new Memory(memoryFile))
   core.io.imem <> memory.io.imem
   core.io.dmem <> memory.io.dmem
+  core.io.regfile <> regfile.io
+  core.io.csrfile <> csrfile.io
   io.exit := core.io.exit
   io.gp := core.io.gp
 }
