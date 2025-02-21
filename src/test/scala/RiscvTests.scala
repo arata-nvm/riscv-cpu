@@ -51,7 +51,7 @@ class RiscvTests extends AnyFlatSpec with ChiselScalatestTester {
     val memoryFilePath = hexDir + memoryFile
 
     it must f"pass $memoryFile" in {
-      test(new Top(memoryFilePath)).runPeekPoke { c =>
+      test(new Top(memoryFilePath, true)).runPeekPoke { c =>
         new PeekPokeTester(c) {
           reset()
           step(1)

@@ -7,7 +7,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class HexTest extends AnyFlatSpec with ChiselScalatestTester {
   it must "work through hex" in {
-    test(new Top("src/hex/pcnt.hex"))
+    test(new Top("src/hex/pcnt.hex", false))
       .runPeekPoke { c =>
         new PeekPokeTester(c) {
           reset()

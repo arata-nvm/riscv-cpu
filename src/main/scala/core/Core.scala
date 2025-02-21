@@ -5,7 +5,7 @@ import chisel3.util._
 import common.Consts._
 import common.Instructions._
 
-class Core extends Module {
+class Core(suppressLog: Boolean) extends Module {
   val io = IO(new Bundle {
     val imem = Flipped(new ImemPortIo())
     val dmem = Flipped(new DmemPortIo())
@@ -366,25 +366,27 @@ class Core extends Module {
   io.gp := regfile(3)
   // io.exit := (id_reg_inst === UNIMP)
   io.exit := (mem_reg_pc === 0x44.U(WORD_LEN.W))
-  printf(p"if_inst_id       : 0x${Hexadecimal(if_inst_id)}\n")
-  printf(p"if_reg_pc        : 0x${Hexadecimal(if_reg_pc)}\n")
-  printf(p"if_inst          : 0x${Hexadecimal(if_inst)}\n")
-  printf(p"if_stall_flg     : 0x${Hexadecimal(if_stall_flg)}\n")
-  printf(p"id_inst_id       : 0x${Hexadecimal(id_inst_id)}\n")
-  printf(p"id_reg_pc        : 0x${Hexadecimal(id_reg_pc)}\n")
-  printf(p"id_reg_inst      : 0x${Hexadecimal(id_reg_inst)}\n")
-  printf(p"id_inst          : 0x${Hexadecimal(id_inst)}\n")
-  printf(p"id_rs1_data      : 0x${Hexadecimal(id_rs1_data)}\n")
-  printf(p"id_rs2_data      : 0x${Hexadecimal(id_rs2_data)}\n")
-  printf(p"exe_inst_id      : 0x${Hexadecimal(exe_inst_id)}\n")
-  printf(p"exe_reg_pc       : 0x${Hexadecimal(exe_reg_pc)}\n")
-  printf(p"exe_reg_op1_data : 0x${Hexadecimal(exe_reg_op1_data)}\n")
-  printf(p"exe_reg_op2_data : 0x${Hexadecimal(exe_reg_op2_data)}\n")
-  printf(p"exe_alu_out      : 0x${Hexadecimal(exe_alu_out)}\n")
-  printf(p"mem_inst_id      : 0x${Hexadecimal(mem_inst_id)}\n")
-  printf(p"mem_reg_pc       : 0x${Hexadecimal(mem_reg_pc)}\n")
-  printf(p"mem_wb_data      : 0x${Hexadecimal(mem_wb_data)}\n")
-  printf(p"wb_inst_id       : 0x${Hexadecimal(wb_inst_id)}\n")
-  printf(p"wb_reg_wb_data   : 0x${Hexadecimal(wb_reg_wb_data)}\n")
-  printf("---------\n")
+  if (!suppressLog) {
+    printf(p"if_inst_id       : 0x${Hexadecimal(if_inst_id)}\n")
+    printf(p"if_reg_pc        : 0x${Hexadecimal(if_reg_pc)}\n")
+    printf(p"if_inst          : 0x${Hexadecimal(if_inst)}\n")
+    printf(p"if_stall_flg     : 0x${Hexadecimal(if_stall_flg)}\n")
+    printf(p"id_inst_id       : 0x${Hexadecimal(id_inst_id)}\n")
+    printf(p"id_reg_pc        : 0x${Hexadecimal(id_reg_pc)}\n")
+    printf(p"id_reg_inst      : 0x${Hexadecimal(id_reg_inst)}\n")
+    printf(p"id_inst          : 0x${Hexadecimal(id_inst)}\n")
+    printf(p"id_rs1_data      : 0x${Hexadecimal(id_rs1_data)}\n")
+    printf(p"id_rs2_data      : 0x${Hexadecimal(id_rs2_data)}\n")
+    printf(p"exe_inst_id      : 0x${Hexadecimal(exe_inst_id)}\n")
+    printf(p"exe_reg_pc       : 0x${Hexadecimal(exe_reg_pc)}\n")
+    printf(p"exe_reg_op1_data : 0x${Hexadecimal(exe_reg_op1_data)}\n")
+    printf(p"exe_reg_op2_data : 0x${Hexadecimal(exe_reg_op2_data)}\n")
+    printf(p"exe_alu_out      : 0x${Hexadecimal(exe_alu_out)}\n")
+    printf(p"mem_inst_id      : 0x${Hexadecimal(mem_inst_id)}\n")
+    printf(p"mem_reg_pc       : 0x${Hexadecimal(mem_reg_pc)}\n")
+    printf(p"mem_wb_data      : 0x${Hexadecimal(mem_wb_data)}\n")
+    printf(p"wb_inst_id       : 0x${Hexadecimal(wb_inst_id)}\n")
+    printf(p"wb_reg_wb_data   : 0x${Hexadecimal(wb_reg_wb_data)}\n")
+    printf("---------\n")
+  }
 }
