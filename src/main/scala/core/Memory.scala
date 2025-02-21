@@ -2,7 +2,7 @@ package core
 
 import chisel3._
 import chisel3.util._
-import chisel3.util.experimental.loadMemoryFromFile
+import chisel3.util.experimental.loadMemoryFromFileInline
 import common.Consts._
 
 class ImemPortIo extends Bundle {
@@ -25,7 +25,9 @@ class Memory(memoryFile: String) extends Module {
 
   val mem = Mem(16384, UInt(8.W))
 
-  loadMemoryFromFile(mem, memoryFile)
+  if (memoryFile.nonEmpty) {
+    loadMemoryFromFileInline(mem, memoryFile)
+  }
 
   io.imem.inst := Cat(
     mem(io.imem.addr + 3.U(WORD_LEN.W)),

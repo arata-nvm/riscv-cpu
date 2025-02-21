@@ -2,10 +2,13 @@ package core
 
 import chisel3._
 import org.scalatest._
+import chisel3.simulator.EphemeralSimulator._
+
 import chiseltest._
+import org.scalatest.flatspec.AnyFlatSpec
+import chiseltest.iotesters.PeekPokeTester
 
-class RiscvTests extends FlatSpec with ChiselScalatestTester {
-
+class RiscvTests extends AnyFlatSpec with ChiselScalatestTester {
   val hexDir = "src/hex/riscv-tests/"
 
   val memoryFiles = Seq(
@@ -48,16 +51,20 @@ class RiscvTests extends FlatSpec with ChiselScalatestTester {
     val memoryFilePath = hexDir + memoryFile
 
     it must f"pass $memoryFile" in {
-      test(new Top(memoryFilePath)) { c =>
-        while (!c.io.exit.peek().litToBoolean) {
-          c.clock.step(1)
+      test(new Top(memoryFilePath)).runPeekPoke { c =>
+        new PeekPokeTester(c) {
+          reset()
+          step(1)
+
+          while (peek(c.io.exit) == 0) {
+            step(1)
+          }
+          expect(c.io.gp, 1)
         }
-        c.io.gp.expect(1.U)
       }
     }
   }
 
-  behavior of "mycpu"
   for (memoryFile <- memoryFiles) {
     runRiscvTests(memoryFile)
   }

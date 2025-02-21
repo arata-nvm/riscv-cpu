@@ -2,8 +2,9 @@ package core
 
 import chisel3._
 import chisel3.util._
-import chisel3.stage.ChiselStage;
+
 import common.Consts._
+import _root_.circt.stage.ChiselStage
 
 class Top(memoryFile: String) extends Module {
   val io = IO(new Bundle {
@@ -20,9 +21,8 @@ class Top(memoryFile: String) extends Module {
 }
 
 object Elaborate extends App {
-  println(
-    ChiselStage.emitSystemVerilog(
-      gen = new Top("src/hex/pcnt.hex")
-    )
+  ChiselStage.emitSystemVerilogFile(
+    new Top("src/hex/pcnt.hex"),
+    firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
   )
 }
