@@ -214,23 +214,21 @@ class Core(suppressLog: Boolean) extends Module {
   val id_exe_fun :: id_op1_sel :: id_op2_sel :: id_mem_wen :: id_rf_wen :: id_wb_sel :: id_csr_cmd :: Nil =
     id_csignals
 
-  val id_op1_data = MuxCase(
-    0.U(WORD_LEN.W),
+  val id_op1_data = MuxLookup(id_op1_sel, 0.U(WORD_LEN.W))(
     Seq(
-      (id_op1_sel === OP1_RS1) -> id_rs1_data,
-      (id_op1_sel === OP1_PC) -> id_reg_pc,
-      (id_op1_sel === OP1_IMZ) -> id_imm_z_uext
+      OP1_RS1 -> id_rs1_data,
+      OP1_PC -> id_reg_pc,
+      OP1_IMZ -> id_imm_z_uext
     )
   )
 
-  val id_op2_data = MuxCase(
-    0.U(WORD_LEN.W),
+  val id_op2_data = MuxLookup(id_op2_sel, 0.U(WORD_LEN.W))(
     Seq(
-      (id_op2_sel === OP2_RS2) -> id_rs2_data,
-      (id_op2_sel === OP2_IMI) -> id_imm_i_sext,
-      (id_op2_sel === OP2_IMS) -> id_imm_s_sext,
-      (id_op2_sel === OP2_IMJ) -> id_imm_j_sext,
-      (id_op2_sel === OP2_IMU) -> id_imm_u_shifted
+      OP2_RS2 -> id_rs2_data,
+      OP2_IMI -> id_imm_i_sext,
+      OP2_IMS -> id_imm_s_sext,
+      OP2_IMJ -> id_imm_j_sext,
+      OP2_IMU -> id_imm_u_shifted
     )
   )
 
@@ -259,44 +257,32 @@ class Core(suppressLog: Boolean) extends Module {
 
   // EX
 
-  exe_alu_out := MuxCase(
-    0.U(WORD_LEN.W),
+  exe_alu_out := MuxLookup(exe_reg_exe_fun, 0.U(WORD_LEN.W))(
     Seq(
-      (exe_reg_exe_fun === ALU_ADD) -> (exe_reg_op1_data + exe_reg_op2_data),
-      (exe_reg_exe_fun === ALU_SUB) -> (exe_reg_op1_data - exe_reg_op2_data),
-      (exe_reg_exe_fun === ALU_AND) -> (exe_reg_op1_data & exe_reg_op2_data),
-      (exe_reg_exe_fun === ALU_OR) -> (exe_reg_op1_data | exe_reg_op2_data),
-      (exe_reg_exe_fun === ALU_XOR) -> (exe_reg_op1_data ^ exe_reg_op2_data),
-      (exe_reg_exe_fun === ALU_SLL) -> (exe_reg_op1_data << exe_reg_op2_data(
-        4,
-        0
-      ))(31, 0),
-      (exe_reg_exe_fun === ALU_SRL) -> (exe_reg_op1_data >> exe_reg_op2_data(
-        4,
-        0
-      )).asUInt,
-      (exe_reg_exe_fun === ALU_SRA) -> (exe_reg_op1_data.asSInt >> exe_reg_op2_data(
-        4,
-        0
-      )).asUInt,
-      (exe_reg_exe_fun === ALU_SLT) -> (exe_reg_op1_data.asSInt < exe_reg_op2_data.asSInt).asUInt,
-      (exe_reg_exe_fun === ALU_SLTU) -> (exe_reg_op1_data < exe_reg_op2_data).asUInt,
-      (exe_reg_exe_fun === ALU_JALR) -> ((exe_reg_op1_data + exe_reg_op2_data) & ~1
-        .U(WORD_LEN.W)),
-      (exe_reg_exe_fun === ALU_COPY1) -> exe_reg_op1_data,
-      (exe_reg_exe_fun === ALU_PCNT) -> PopCount(exe_reg_op1_data)
+      ALU_ADD -> (exe_reg_op1_data + exe_reg_op2_data),
+      ALU_SUB -> (exe_reg_op1_data - exe_reg_op2_data),
+      ALU_AND -> (exe_reg_op1_data & exe_reg_op2_data),
+      ALU_OR -> (exe_reg_op1_data | exe_reg_op2_data),
+      ALU_XOR -> (exe_reg_op1_data ^ exe_reg_op2_data),
+      ALU_SLL -> (exe_reg_op1_data << exe_reg_op2_data(4, 0))(31, 0),
+      ALU_SRL -> (exe_reg_op1_data >> exe_reg_op2_data(4, 0)).asUInt,
+      ALU_SRA -> (exe_reg_op1_data.asSInt >> exe_reg_op2_data(4, 0)).asUInt,
+      ALU_SLT -> (exe_reg_op1_data.asSInt < exe_reg_op2_data.asSInt).asUInt,
+      ALU_SLTU -> (exe_reg_op1_data < exe_reg_op2_data).asUInt,
+      ALU_JALR -> ((exe_reg_op1_data + exe_reg_op2_data) & ~1.U(WORD_LEN.W)),
+      ALU_COPY1 -> exe_reg_op1_data,
+      ALU_PCNT -> PopCount(exe_reg_op1_data)
     )
   )
 
-  exe_br_flg := MuxCase(
-    false.B,
+  exe_br_flg := MuxLookup(exe_reg_exe_fun, false.B)(
     Seq(
-      (exe_reg_exe_fun === BR_BEQ) -> (exe_reg_op1_data === exe_reg_op2_data),
-      (exe_reg_exe_fun === BR_BNE) -> !(exe_reg_op1_data === exe_reg_op2_data),
-      (exe_reg_exe_fun === BR_BLT) -> (exe_reg_op1_data.asSInt < exe_reg_op2_data.asSInt),
-      (exe_reg_exe_fun === BR_BGE) -> !(exe_reg_op1_data.asSInt < exe_reg_op2_data.asSInt),
-      (exe_reg_exe_fun === BR_BLTU) -> (exe_reg_op1_data < exe_reg_op2_data),
-      (exe_reg_exe_fun === BR_BGEU) -> !(exe_reg_op1_data < exe_reg_op2_data)
+      BR_BEQ -> (exe_reg_op1_data === exe_reg_op2_data),
+      BR_BNE -> !(exe_reg_op1_data === exe_reg_op2_data),
+      BR_BLT -> (exe_reg_op1_data.asSInt < exe_reg_op2_data.asSInt),
+      BR_BGE -> !(exe_reg_op1_data.asSInt < exe_reg_op2_data.asSInt),
+      BR_BLTU -> (exe_reg_op1_data < exe_reg_op2_data),
+      BR_BGEU -> !(exe_reg_op1_data < exe_reg_op2_data)
     )
   )
   exe_br_target := exe_reg_pc + exe_reg_imm_b_sext
@@ -329,12 +315,11 @@ class Core(suppressLog: Boolean) extends Module {
   io.csrfile.wdata := mem_reg_op1_data
 
   val mem_pc_plus4 = mem_reg_pc + 4.U(WORD_LEN.W)
-  mem_wb_data := MuxCase(
-    mem_reg_alu_out,
+  mem_wb_data := MuxLookup(mem_reg_wb_sel, mem_reg_alu_out)(
     Seq(
-      (mem_reg_wb_sel === WB_MEM) -> io.dmem.rdata,
-      (mem_reg_wb_sel === WB_PC) -> mem_pc_plus4,
-      (mem_reg_wb_sel === WB_CSR) -> io.csrfile.rdata
+      WB_MEM -> io.dmem.rdata,
+      WB_PC -> mem_pc_plus4,
+      WB_CSR -> io.csrfile.rdata
     )
   )
 
