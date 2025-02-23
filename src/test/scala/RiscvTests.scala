@@ -56,8 +56,11 @@ class RiscvTests extends AnyFlatSpec with ChiselScalatestTester {
           reset()
           step(1)
 
+          var cycles = 0
           while (peek(c.io.exit) == 0) {
+            assert(cycles <= 1000, "timeout")
             step(1)
+            cycles += 1
           }
           expect(c.io.gp, 1)
         }
