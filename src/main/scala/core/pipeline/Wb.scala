@@ -9,7 +9,7 @@ import common.RenSel
 
 class Wb2IdIo extends Bundle {
   val rf_wen = Output(RenSel())
-  val wb_addr = Output(UInt(ADDR_LEN.W))
+  val wb_addr = Output(UInt(REG_ADDR_LEN.W))
   val wb_data = Output(UInt(WORD_LEN.W))
 }
 

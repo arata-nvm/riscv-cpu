@@ -30,7 +30,7 @@ class Id2ExIo extends Bundle {
   val csr_addr = Output(UInt(CSR_ADDR_LEN.W))
   val rf_wen = Output(RenSel())
   val wb_sel = Output(WbSel())
-  val wb_addr = Output(UInt(ADDR_LEN.W))
+  val wb_addr = Output(UInt(REG_ADDR_LEN.W))
 }
 
 class IdUnit extends Module {
@@ -46,7 +46,7 @@ class IdUnit extends Module {
   })
 
   val reg_rf_wen = RegInit(RenSel.X)
-  val reg_wb_addr = RegInit(0.U(ADDR_LEN.W))
+  val reg_wb_addr = RegInit(0.U(REG_ADDR_LEN.W))
 
   val rs1_addr_b = io.if2id.inst(19, 15)
   val rs2_addr_b = io.if2id.inst(24, 20)

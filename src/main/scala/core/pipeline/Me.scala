@@ -12,7 +12,7 @@ import common.MenSel
 
 class Me2IdIo extends Bundle {
   val rf_wen = Output(RenSel())
-  val wb_addr = Output(UInt(ADDR_LEN.W))
+  val wb_addr = Output(UInt(REG_ADDR_LEN.W))
   val wb_data = Output(UInt(WORD_LEN.W))
 }
 
@@ -20,7 +20,7 @@ class Me2WbIo extends Bundle {
   val pc = Output(UInt(WORD_LEN.W))
   val inst_id = Output(UInt(WORD_LEN.W))
   val rf_wen = Output(RenSel())
-  val wb_addr = Output(UInt(ADDR_LEN.W))
+  val wb_addr = Output(UInt(REG_ADDR_LEN.W))
   val wb_data = Output(UInt(WORD_LEN.W))
 }
 
