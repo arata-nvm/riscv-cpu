@@ -48,14 +48,48 @@ class ExUnit extends Module {
       ALU_AND -> (io.id2ex.op1_data & io.id2ex.op2_data),
       ALU_OR -> (io.id2ex.op1_data | io.id2ex.op2_data),
       ALU_XOR -> (io.id2ex.op1_data ^ io.id2ex.op2_data),
-      ALU_SLL -> (io.id2ex.op1_data << io.id2ex.op2_data(4, 0))(31, 0),
+      ALU_SLL -> (io.id2ex.op1_data << io.id2ex
+        .op2_data(4, 0))(WORD_LEN - 1, 0),
       ALU_SRL -> (io.id2ex.op1_data >> io.id2ex.op2_data(4, 0)).asUInt,
       ALU_SRA -> (io.id2ex.op1_data.asSInt >> io.id2ex.op2_data(4, 0)).asUInt,
       ALU_SLT -> (io.id2ex.op1_data.asSInt < io.id2ex.op2_data.asSInt).asUInt,
       ALU_SLTU -> (io.id2ex.op1_data < io.id2ex.op2_data).asUInt,
       ALU_JALR -> ((io.id2ex.op1_data + io.id2ex.op2_data) & ~1.U(WORD_LEN.W)),
       ALU_COPY1 -> io.id2ex.op1_data,
-      ALU_PCNT -> PopCount(io.id2ex.op1_data)
+      ALU_PCNT -> PopCount(io.id2ex.op1_data),
+      ALU_MUL -> (io.id2ex.op1_data * io.id2ex.op2_data),
+      ALU_MULH -> (io.id2ex.op1_data.asSInt * io.id2ex.op2_data.asSInt)(
+        WORD_LEN * 2 - 1,
+        WORD_LEN
+      ).asUInt,
+      ALU_MULHU -> (io.id2ex.op1_data.asUInt * io.id2ex.op2_data.asUInt)(
+        WORD_LEN * 2 - 1,
+        WORD_LEN
+      ).asUInt,
+      ALU_MULHSU -> (io.id2ex.op1_data.asSInt * io.id2ex.op2_data.asUInt)(
+        WORD_LEN * 2 - 1,
+        WORD_LEN
+      ).asUInt,
+      ALU_DIV -> Mux(
+        io.id2ex.op2_data === 0.U(WORD_LEN.W),
+        ~0.U(WORD_LEN.W),
+        (io.id2ex.op1_data.asSInt / io.id2ex.op2_data.asSInt).asUInt
+      ),
+      ALU_DIVU -> Mux(
+        io.id2ex.op2_data === 0.U(WORD_LEN.W),
+        ~0.U(WORD_LEN.W),
+        (io.id2ex.op1_data / io.id2ex.op2_data)
+      ),
+      ALU_REM -> Mux(
+        io.id2ex.op2_data === 0.U(WORD_LEN.W),
+        io.id2ex.op1_data,
+        (io.id2ex.op1_data.asSInt % io.id2ex.op2_data.asSInt).asUInt
+      ),
+      ALU_REMU -> Mux(
+        io.id2ex.op2_data === 0.U(WORD_LEN.W),
+        io.id2ex.op1_data,
+        (io.id2ex.op1_data % io.id2ex.op2_data)
+      )
     )
   )
 

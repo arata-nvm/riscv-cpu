@@ -146,7 +146,15 @@ class IdUnit extends Module {
       CSRRC -> List(ALU_COPY1, OP1_RS1, OP2_X, MEN_X, REN_S, WB_CSR, CSR_C),
       CSRRCI -> List(ALU_COPY1, OP1_IMZ, OP2_X, MEN_X, REN_S, WB_CSR, CSR_C),
       ECALL -> List(ALU_X, OP1_X, OP2_X, MEN_X, REN_X, WB_X, CSR_E),
-      PCNT -> List(ALU_PCNT, OP1_RS1, OP2_X, MEN_X, REN_S, WB_ALU, CSR_X)
+      PCNT -> List(ALU_PCNT, OP1_RS1, OP2_X, MEN_X, REN_S, WB_ALU, CSR_X),
+      MUL -> List(ALU_MUL, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
+      MULH -> List(ALU_MULH, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
+      MULHU -> List(ALU_MULHU, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
+      MULHSU -> List(ALU_MULHSU, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
+      DIV -> List(ALU_DIV, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
+      DIVU -> List(ALU_DIVU, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
+      REM -> List(ALU_REM, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
+      REMU -> List(ALU_REMU, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X)
     )
   )
   val exe_fun :: op1_sel :: op2_sel :: mem_wen :: rf_wen :: wb_sel :: csr_cmd :: Nil =
