@@ -39,7 +39,7 @@ class IdUnit extends Module {
     val if2id = Flipped(new If2IdIo())
     val id2if = new Id2IfIo()
     val id2ex = new Id2ExIo()
-    val ex2id = Flipped(new Ex2IfIo())
+    val ex2id = Flipped(new Ex2IdIo())
     val me2id = Flipped(new Me2IdIo())
     val wb2id = Flipped(new Wb2IdIo())
   })

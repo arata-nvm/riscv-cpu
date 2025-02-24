@@ -78,9 +78,7 @@ class ExUnit extends Module {
   io.ex2if.jmp_flg := jmp_flg
   io.ex2if.alu_out := alu_out
   io.ex2id.br_flg := br_flg
-  io.ex2id.br_target := br_target
   io.ex2id.jmp_flg := jmp_flg
-  io.ex2id.alu_out := alu_out
   io.ex2me.pc := RegNext(io.id2ex.pc)
   io.ex2me.inst_id := RegNext(io.id2ex.inst_id)
   io.ex2me.op1_data := RegNext(io.id2ex.op1_data)
