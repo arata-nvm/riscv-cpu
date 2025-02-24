@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FILES=/src/target/share/riscv-tests/isa/rv32*i-p-*
+FILES=/src/target/share/riscv-tests/isa/rv32*
 SAVE_DIR=/src/src/riscv
 
 for f in $FILES

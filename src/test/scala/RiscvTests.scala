@@ -44,7 +44,15 @@ class RiscvTests extends AnyFlatSpec with ChiselScalatestTester {
     "rv32ui-p-lui.hex",
     "rv32ui-p-auipc.hex",
     "rv32mi-p-csr.hex",
-    "rv32mi-p-scall.hex"
+    "rv32mi-p-scall.hex",
+    "rv32um-p-mul.hex",
+    "rv32um-p-mulh.hex",
+    "rv32um-p-mulhu.hex",
+    "rv32um-p-mulhsu.hex",
+    "rv32um-p-div.hex",
+    "rv32um-p-divu.hex",
+    "rv32um-p-rem.hex",
+    "rv32um-p-remu.hex"
   )
 
   def runRiscvTests(memoryFile: String) = {
