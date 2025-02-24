@@ -4,6 +4,11 @@ import chisel3._
 import chisel3.util._
 import common.Consts._
 import common.Instructions._
+import common.WbSel
+import common.RenSel
+import common.CsrCmd
+import common.MenSel
+import common.ExFunc
 
 class Ex2IfIo extends Bundle {
   val br_flg = Output(Bool())
@@ -25,11 +30,11 @@ class Ex2MeIo extends Bundle {
   val rs2_data = Output(UInt(WORD_LEN.W))
   val imm_z_uext = Output(UInt(WORD_LEN.W))
   val alu_out = Output(UInt(WORD_LEN.W))
-  val mem_wen = Output(UInt(WORD_LEN.W))
-  val csr_cmd = Output(UInt(WORD_LEN.W))
+  val mem_wen = Output(MenSel())
+  val csr_cmd = Output(CsrCmd())
   val csr_addr = Output(UInt(WORD_LEN.W))
-  val rf_wen = Output(UInt(WORD_LEN.W))
-  val wb_sel = Output(UInt(WORD_LEN.W))
+  val rf_wen = Output(RenSel())
+  val wb_sel = Output(WbSel())
   val wb_addr = Output(UInt(WORD_LEN.W))
 }
 
@@ -43,49 +48,52 @@ class ExUnit extends Module {
 
   val alu_out = MuxLookup(io.id2ex.exe_fun, 0.U(WORD_LEN.W))(
     Seq(
-      ALU_ADD -> (io.id2ex.op1_data + io.id2ex.op2_data),
-      ALU_SUB -> (io.id2ex.op1_data - io.id2ex.op2_data),
-      ALU_AND -> (io.id2ex.op1_data & io.id2ex.op2_data),
-      ALU_OR -> (io.id2ex.op1_data | io.id2ex.op2_data),
-      ALU_XOR -> (io.id2ex.op1_data ^ io.id2ex.op2_data),
-      ALU_SLL -> (io.id2ex.op1_data << io.id2ex
+      ExFunc.ADD -> (io.id2ex.op1_data + io.id2ex.op2_data),
+      ExFunc.SUB -> (io.id2ex.op1_data - io.id2ex.op2_data),
+      ExFunc.AND -> (io.id2ex.op1_data & io.id2ex.op2_data),
+      ExFunc.OR -> (io.id2ex.op1_data | io.id2ex.op2_data),
+      ExFunc.XOR -> (io.id2ex.op1_data ^ io.id2ex.op2_data),
+      ExFunc.SLL -> (io.id2ex.op1_data << io.id2ex
         .op2_data(4, 0))(WORD_LEN - 1, 0),
-      ALU_SRL -> (io.id2ex.op1_data >> io.id2ex.op2_data(4, 0)).asUInt,
-      ALU_SRA -> (io.id2ex.op1_data.asSInt >> io.id2ex.op2_data(4, 0)).asUInt,
-      ALU_SLT -> (io.id2ex.op1_data.asSInt < io.id2ex.op2_data.asSInt).asUInt,
-      ALU_SLTU -> (io.id2ex.op1_data < io.id2ex.op2_data).asUInt,
-      ALU_JALR -> ((io.id2ex.op1_data + io.id2ex.op2_data) & ~1.U(WORD_LEN.W)),
-      ALU_COPY1 -> io.id2ex.op1_data,
-      ALU_PCNT -> PopCount(io.id2ex.op1_data),
-      ALU_MUL -> (io.id2ex.op1_data * io.id2ex.op2_data),
-      ALU_MULH -> (io.id2ex.op1_data.asSInt * io.id2ex.op2_data.asSInt)(
+      ExFunc.SRL -> (io.id2ex.op1_data >> io.id2ex.op2_data(4, 0)).asUInt,
+      ExFunc.SRA -> (io.id2ex.op1_data.asSInt >> io.id2ex
+        .op2_data(4, 0)).asUInt,
+      ExFunc.SLT -> (io.id2ex.op1_data.asSInt < io.id2ex.op2_data.asSInt).asUInt,
+      ExFunc.SLTU -> (io.id2ex.op1_data < io.id2ex.op2_data).asUInt,
+      ExFunc.JALR -> ((io.id2ex.op1_data + io.id2ex.op2_data) & ~1.U(
+        WORD_LEN.W
+      )),
+      ExFunc.COPY1 -> io.id2ex.op1_data,
+      ExFunc.PCNT -> PopCount(io.id2ex.op1_data),
+      ExFunc.MUL -> (io.id2ex.op1_data * io.id2ex.op2_data),
+      ExFunc.MULH -> (io.id2ex.op1_data.asSInt * io.id2ex.op2_data.asSInt)(
         WORD_LEN * 2 - 1,
         WORD_LEN
       ).asUInt,
-      ALU_MULHU -> (io.id2ex.op1_data.asUInt * io.id2ex.op2_data.asUInt)(
+      ExFunc.MULHU -> (io.id2ex.op1_data.asUInt * io.id2ex.op2_data.asUInt)(
         WORD_LEN * 2 - 1,
         WORD_LEN
       ).asUInt,
-      ALU_MULHSU -> (io.id2ex.op1_data.asSInt * io.id2ex.op2_data.asUInt)(
+      ExFunc.MULHSU -> (io.id2ex.op1_data.asSInt * io.id2ex.op2_data.asUInt)(
         WORD_LEN * 2 - 1,
         WORD_LEN
       ).asUInt,
-      ALU_DIV -> Mux(
+      ExFunc.DIV -> Mux(
         io.id2ex.op2_data === 0.U(WORD_LEN.W),
         ~0.U(WORD_LEN.W),
         (io.id2ex.op1_data.asSInt / io.id2ex.op2_data.asSInt).asUInt
       ),
-      ALU_DIVU -> Mux(
+      ExFunc.DIVU -> Mux(
         io.id2ex.op2_data === 0.U(WORD_LEN.W),
         ~0.U(WORD_LEN.W),
         (io.id2ex.op1_data / io.id2ex.op2_data)
       ),
-      ALU_REM -> Mux(
+      ExFunc.REM -> Mux(
         io.id2ex.op2_data === 0.U(WORD_LEN.W),
         io.id2ex.op1_data,
         (io.id2ex.op1_data.asSInt % io.id2ex.op2_data.asSInt).asUInt
       ),
-      ALU_REMU -> Mux(
+      ExFunc.REMU -> Mux(
         io.id2ex.op2_data === 0.U(WORD_LEN.W),
         io.id2ex.op1_data,
         (io.id2ex.op1_data % io.id2ex.op2_data)
@@ -95,17 +103,17 @@ class ExUnit extends Module {
 
   val br_flg = MuxLookup(io.id2ex.exe_fun, false.B)(
     Seq(
-      BR_BEQ -> (io.id2ex.op1_data === io.id2ex.op2_data),
-      BR_BNE -> !(io.id2ex.op1_data === io.id2ex.op2_data),
-      BR_BLT -> (io.id2ex.op1_data.asSInt < io.id2ex.op2_data.asSInt),
-      BR_BGE -> !(io.id2ex.op1_data.asSInt < io.id2ex.op2_data.asSInt),
-      BR_BLTU -> (io.id2ex.op1_data < io.id2ex.op2_data),
-      BR_BGEU -> !(io.id2ex.op1_data < io.id2ex.op2_data)
+      ExFunc.BEQ -> (io.id2ex.op1_data === io.id2ex.op2_data),
+      ExFunc.BNE -> !(io.id2ex.op1_data === io.id2ex.op2_data),
+      ExFunc.BLT -> (io.id2ex.op1_data.asSInt < io.id2ex.op2_data.asSInt),
+      ExFunc.BGE -> !(io.id2ex.op1_data.asSInt < io.id2ex.op2_data.asSInt),
+      ExFunc.BLTU -> (io.id2ex.op1_data < io.id2ex.op2_data),
+      ExFunc.BGEU -> !(io.id2ex.op1_data < io.id2ex.op2_data)
     )
   )
   val br_target = io.id2ex.pc + io.id2ex.imm_b_sext
 
-  val jmp_flg = (io.id2ex.wb_sel === WB_PC)
+  val jmp_flg = (io.id2ex.wb_sel === WbSel.PC)
 
   io.ex2if.br_flg := br_flg
   io.ex2if.br_target := br_target

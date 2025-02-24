@@ -6,6 +6,7 @@ import common.Consts._
 import common.Instructions._
 import core.ImemPortIo
 import core.RegFileReaderIo
+import common._
 
 class Id2IfIo extends Bundle {
   val stall_flg = Output(Bool())
@@ -23,12 +24,12 @@ class Id2ExIo extends Bundle {
   val imm_b_sext = Output(UInt(WORD_LEN.W))
   val imm_u_shifted = Output(UInt(WORD_LEN.W))
   val imm_z_uext = Output(UInt(WORD_LEN.W))
-  val exe_fun = Output(UInt(EXE_FUN_LEN.W))
-  val mem_wen = Output(UInt(MEN_LEN.W))
-  val csr_cmd = Output(UInt(CSR_LEN.W))
+  val exe_fun = Output(ExFunc())
+  val mem_wen = Output(MenSel())
+  val csr_cmd = Output(CsrCmd())
   val csr_addr = Output(UInt(CSR_ADDR_LEN.W))
-  val rf_wen = Output(UInt(REN_LEN.W))
-  val wb_sel = Output(UInt(WB_SEL_LEN.W))
+  val rf_wen = Output(RenSel())
+  val wb_sel = Output(WbSel())
   val wb_addr = Output(UInt(ADDR_LEN.W))
 }
 
@@ -44,15 +45,15 @@ class IdUnit extends Module {
     val wb2id = Flipped(new Wb2IdIo())
   })
 
-  val reg_rf_wen = RegInit(0.U(REN_LEN.W))
+  val reg_rf_wen = RegInit(RenSel.X)
   val reg_wb_addr = RegInit(0.U(ADDR_LEN.W))
 
   val rs1_addr_b = io.if2id.inst(19, 15)
   val rs2_addr_b = io.if2id.inst(24, 20)
   val rs1_data_hazard =
-    reg_rf_wen === REN_S && rs1_addr_b =/= 0.U && rs1_addr_b === reg_wb_addr
+    reg_rf_wen === RenSel.S && rs1_addr_b =/= 0.U && rs1_addr_b === reg_wb_addr
   val rs2_data_hazard =
-    reg_rf_wen === REN_S && rs2_addr_b =/= 0.U && rs2_addr_b === reg_wb_addr
+    reg_rf_wen === RenSel.S && rs2_addr_b =/= 0.U && rs2_addr_b === reg_wb_addr
   val stall_flg = rs1_data_hazard || rs2_data_hazard
 
   val inst = Mux(
@@ -76,8 +77,8 @@ class IdUnit extends Module {
       io.regfile_rs1.data,
       Seq(
         (rs1_addr === 0.U) -> 0.U(WORD_LEN.W),
-        (rs1_addr === io.me2id.wb_addr && io.me2id.rf_wen === REN_S) -> io.me2id.wb_data,
-        (rs1_addr === io.wb2id.wb_addr && io.wb2id.rf_wen === REN_S) -> io.wb2id.wb_data
+        (rs1_addr === io.me2id.wb_addr && io.me2id.rf_wen === RenSel.S) -> io.me2id.wb_data,
+        (rs1_addr === io.wb2id.wb_addr && io.wb2id.rf_wen === RenSel.S) -> io.wb2id.wb_data
       )
     )
   io.regfile_rs2.addr := rs2_addr
@@ -86,8 +87,8 @@ class IdUnit extends Module {
       io.regfile_rs2.data,
       Seq(
         (rs2_addr === 0.U) -> 0.U(WORD_LEN.W),
-        (rs2_addr === io.me2id.wb_addr && io.me2id.rf_wen === REN_S) -> io.me2id.wb_data,
-        (rs2_addr === io.wb2id.wb_addr && io.wb2id.rf_wen === REN_S) -> io.wb2id.wb_data
+        (rs2_addr === io.me2id.wb_addr && io.me2id.rf_wen === RenSel.S) -> io.me2id.wb_data,
+        (rs2_addr === io.wb2id.wb_addr && io.wb2id.rf_wen === RenSel.S) -> io.wb2id.wb_data
       )
     )
 
@@ -104,81 +105,83 @@ class IdUnit extends Module {
   val imm_z = inst(19, 15)
   val imm_z_uext = Cat(Fill(27, 0.U), imm_z)
 
+  // format: off
   val csignals = ListLookup(
     inst,
-    List(ALU_X, OP1_X, OP2_X, MEN_X, REN_X, WB_X, CSR_X),
+    List(ExFunc.X, Op1Sel.X, Op2Sel.X, MenSel.X, RenSel.X, WbSel.X, CsrCmd.X),
     Array(
-      LW -> List(ALU_ADD, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_MEM, CSR_X),
-      SW -> List(ALU_ADD, OP1_RS1, OP2_IMS, MEN_S, REN_X, WB_X, CSR_X),
-      ADD -> List(ALU_ADD, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      ADDI -> List(ALU_ADD, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_ALU, CSR_X),
-      SUB -> List(ALU_SUB, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      AND -> List(ALU_AND, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      OR -> List(ALU_OR, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      XOR -> List(ALU_XOR, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      ANDI -> List(ALU_AND, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_ALU, CSR_X),
-      ORI -> List(ALU_OR, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_ALU, CSR_X),
-      XORI -> List(ALU_XOR, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_ALU, CSR_X),
-      SLL -> List(ALU_SLL, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      SRL -> List(ALU_SRL, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      SRA -> List(ALU_SRA, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      SLLI -> List(ALU_SLL, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_ALU, CSR_X),
-      SRLI -> List(ALU_SRL, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_ALU, CSR_X),
-      SRAI -> List(ALU_SRA, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_ALU, CSR_X),
-      SLT -> List(ALU_SLT, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      SLTU -> List(ALU_SLTU, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      SLTI -> List(ALU_SLT, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_ALU, CSR_X),
-      SLTIU -> List(ALU_SLTU, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_ALU, CSR_X),
-      BEQ -> List(BR_BEQ, OP1_RS1, OP2_RS2, MEN_X, REN_X, WB_X, CSR_X),
-      BNE -> List(BR_BNE, OP1_RS1, OP2_RS2, MEN_X, REN_X, WB_X, CSR_X),
-      BGE -> List(BR_BGE, OP1_RS1, OP2_RS2, MEN_X, REN_X, WB_X, CSR_X),
-      BGEU -> List(BR_BGEU, OP1_RS1, OP2_RS2, MEN_X, REN_X, WB_X, CSR_X),
-      BLT -> List(BR_BLT, OP1_RS1, OP2_RS2, MEN_X, REN_X, WB_X, CSR_X),
-      BLTU -> List(BR_BLTU, OP1_RS1, OP2_RS2, MEN_X, REN_X, WB_X, CSR_X),
-      JAL -> List(ALU_ADD, OP1_PC, OP2_IMJ, MEN_X, REN_S, WB_PC, CSR_X),
-      JALR -> List(ALU_JALR, OP1_RS1, OP2_IMI, MEN_X, REN_S, WB_PC, CSR_X),
-      LUI -> List(ALU_ADD, OP1_X, OP2_IMU, MEN_X, REN_S, WB_ALU, CSR_X),
-      AUIPC -> List(ALU_ADD, OP1_PC, OP2_IMU, MEN_X, REN_S, WB_ALU, CSR_X),
-      CSRRW -> List(ALU_COPY1, OP1_RS1, OP2_X, MEN_X, REN_S, WB_CSR, CSR_W),
-      CSRRWI -> List(ALU_COPY1, OP1_IMZ, OP2_X, MEN_X, REN_S, WB_CSR, CSR_W),
-      CSRRS -> List(ALU_COPY1, OP1_RS1, OP2_X, MEN_X, REN_S, WB_CSR, CSR_S),
-      CSRRSI -> List(ALU_COPY1, OP1_IMZ, OP2_X, MEN_X, REN_S, WB_CSR, CSR_S),
-      CSRRC -> List(ALU_COPY1, OP1_RS1, OP2_X, MEN_X, REN_S, WB_CSR, CSR_C),
-      CSRRCI -> List(ALU_COPY1, OP1_IMZ, OP2_X, MEN_X, REN_S, WB_CSR, CSR_C),
-      ECALL -> List(ALU_X, OP1_X, OP2_X, MEN_X, REN_X, WB_X, CSR_E),
-      PCNT -> List(ALU_PCNT, OP1_RS1, OP2_X, MEN_X, REN_S, WB_ALU, CSR_X),
-      MUL -> List(ALU_MUL, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      MULH -> List(ALU_MULH, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      MULHU -> List(ALU_MULHU, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      MULHSU -> List(ALU_MULHSU, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      DIV -> List(ALU_DIV, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      DIVU -> List(ALU_DIVU, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      REM -> List(ALU_REM, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X),
-      REMU -> List(ALU_REMU, OP1_RS1, OP2_RS2, MEN_X, REN_S, WB_ALU, CSR_X)
+      LW ->     List( ExFunc.ADD,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.MEM, CsrCmd.X ),
+      SW ->     List( ExFunc.ADD,    Op1Sel.RS1, Op2Sel.IMS, MenSel.S, RenSel.X, WbSel.X,   CsrCmd.X ),
+      ADD ->    List( ExFunc.ADD,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      ADDI ->   List( ExFunc.ADD,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SUB ->    List( ExFunc.SUB,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      AND ->    List( ExFunc.AND,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      OR ->     List( ExFunc.OR,     Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      XOR ->    List( ExFunc.XOR,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      ANDI ->   List( ExFunc.AND,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      ORI ->    List( ExFunc.OR,     Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      XORI ->   List( ExFunc.XOR,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SLL ->    List( ExFunc.SLL,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SRL ->    List( ExFunc.SRL,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SRA ->    List( ExFunc.SRA,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SLLI ->   List( ExFunc.SLL,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SRLI ->   List( ExFunc.SRL,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SRAI ->   List( ExFunc.SRA,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SLT ->    List( ExFunc.SLT,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SLTU ->   List( ExFunc.SLTU,   Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SLTI ->   List( ExFunc.SLT,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      SLTIU ->  List( ExFunc.SLTU,   Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      BEQ ->    List( ExFunc.BEQ,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.X, WbSel.X,   CsrCmd.X ),
+      BNE ->    List( ExFunc.BNE,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.X, WbSel.X,   CsrCmd.X ),
+      BGE ->    List( ExFunc.BGE,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.X, WbSel.X,   CsrCmd.X ),
+      BGEU ->   List( ExFunc.BGEU,   Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.X, WbSel.X,   CsrCmd.X ),
+      BLT ->    List( ExFunc.BLT,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.X, WbSel.X,   CsrCmd.X ),
+      BLTU ->   List( ExFunc.BLTU,   Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.X, WbSel.X,   CsrCmd.X ),
+      JAL ->    List( ExFunc.ADD,    Op1Sel.PC,  Op2Sel.IMJ, MenSel.X, RenSel.S, WbSel.PC,  CsrCmd.X ),
+      JALR ->   List( ExFunc.JALR,   Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.PC,  CsrCmd.X ),
+      LUI ->    List( ExFunc.ADD,    Op1Sel.X,   Op2Sel.IMU, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      AUIPC ->  List( ExFunc.ADD,    Op1Sel.PC,  Op2Sel.IMU, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      CSRRW ->  List( ExFunc.COPY1,  Op1Sel.RS1, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR, CsrCmd.W ),
+      CSRRWI -> List( ExFunc.COPY1,  Op1Sel.IMZ, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR, CsrCmd.W ),
+      CSRRS ->  List( ExFunc.COPY1,  Op1Sel.RS1, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR, CsrCmd.S ),
+      CSRRSI -> List( ExFunc.COPY1,  Op1Sel.IMZ, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR, CsrCmd.S ),
+      CSRRC ->  List( ExFunc.COPY1,  Op1Sel.RS1, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR, CsrCmd.C ),
+      CSRRCI -> List( ExFunc.COPY1,  Op1Sel.IMZ, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR, CsrCmd.C ),
+      ECALL ->  List( ExFunc.X,      Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,   CsrCmd.E ),
+      PCNT ->   List( ExFunc.PCNT,   Op1Sel.RS1, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      MUL ->    List( ExFunc.MUL,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      MULH ->   List( ExFunc.MULH,   Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      MULHU ->  List( ExFunc.MULHU,  Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      MULHSU -> List( ExFunc.MULHSU, Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      DIV ->    List( ExFunc.DIV,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      DIVU ->   List( ExFunc.DIVU,   Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      REM ->    List( ExFunc.REM,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
+      REMU ->   List( ExFunc.REMU,   Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X )
     )
   )
   val exe_fun :: op1_sel :: op2_sel :: mem_wen :: rf_wen :: wb_sel :: csr_cmd :: Nil =
     csignals
+  // format: on
 
   val op1_data = MuxLookup(op1_sel, 0.U(WORD_LEN.W))(
     Seq(
-      OP1_RS1 -> rs1_data,
-      OP1_PC -> io.if2id.pc,
-      OP1_IMZ -> imm_z_uext
+      Op1Sel.RS1 -> rs1_data,
+      Op1Sel.PC -> io.if2id.pc,
+      Op1Sel.IMZ -> imm_z_uext
     )
   )
 
   val op2_data = MuxLookup(op2_sel, 0.U(WORD_LEN.W))(
     Seq(
-      OP2_RS2 -> rs2_data,
-      OP2_IMI -> imm_i_sext,
-      OP2_IMS -> imm_s_sext,
-      OP2_IMJ -> imm_j_sext,
-      OP2_IMU -> imm_u_shifted
+      Op2Sel.RS2 -> rs2_data,
+      Op2Sel.IMI -> imm_i_sext,
+      Op2Sel.IMS -> imm_s_sext,
+      Op2Sel.IMJ -> imm_j_sext,
+      Op2Sel.IMU -> imm_u_shifted
     )
   )
 
-  val csr_addr = Mux(csr_cmd === CSR_E, CSR_ADDR_MCAUSE, inst(31, 20))
+  val csr_addr = Mux(csr_cmd === CsrCmd.E, CSR_ADDR_MCAUSE, inst(31, 20))
 
   reg_rf_wen := rf_wen
   reg_wb_addr := wb_addr
