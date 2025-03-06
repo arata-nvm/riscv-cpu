@@ -5,7 +5,7 @@ import chisel3._
 object ExFunc extends ChiselEnum {
   val X, ADD, SUB, AND, OR, XOR, SLL, SRL, SRA, SLT, SLTU, BEQ, BNE, BLT, BGE,
       BLTU, BGEU, JALR, COPY1, PCNT, MUL, MULH, MULHU, MULHSU, DIV, DIVU, REM,
-      REMU =
+      REMU, ECALL =
     Value
 }
 

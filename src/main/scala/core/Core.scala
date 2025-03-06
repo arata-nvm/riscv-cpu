@@ -27,7 +27,6 @@ class Core(suppressLog: Boolean) extends Module {
   val wb_unit = Module(new WbUnit())
 
   if_unit.io.imem <> io.imem
-  if_unit.io.csrfile_mtvec := io.csrfile.mtvec
   if_unit.io.if2id <> id_unit.io.if2id
 
   id_unit.io.regfile_rs1 <> io.regfile.rs1
@@ -35,6 +34,7 @@ class Core(suppressLog: Boolean) extends Module {
   id_unit.io.id2if <> if_unit.io.id2if
   id_unit.io.id2ex <> ex_unit.io.id2ex
 
+  ex_unit.io.csrfile_mtvec := io.csrfile.mtvec
   ex_unit.io.ex2if <> if_unit.io.ex2if
   ex_unit.io.ex2id <> id_unit.io.ex2id
   ex_unit.io.ex2me <> me_unit.io.ex2me

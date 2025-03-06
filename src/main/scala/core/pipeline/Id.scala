@@ -57,12 +57,12 @@ class IdUnit extends Module {
   val stall_flg = rs1_data_hazard || rs2_data_hazard
 
   val inst = Mux(
-    io.ex2id.br_flg || io.ex2id.jmp_flg || stall_flg,
+    io.ex2id.branch_taken || stall_flg,
     BUBBLE,
     io.if2id.inst
   )
   val inst_id = Mux(
-    io.ex2id.br_flg || io.ex2id.jmp_flg || stall_flg,
+    io.ex2id.branch_taken || stall_flg,
     ~0.U(WORD_LEN.W),
     io.if2id.inst_id
   )
@@ -147,7 +147,7 @@ class IdUnit extends Module {
       CSRRSI -> List( ExFunc.COPY1,  Op1Sel.IMZ, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR, CsrCmd.S ),
       CSRRC ->  List( ExFunc.COPY1,  Op1Sel.RS1, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR, CsrCmd.C ),
       CSRRCI -> List( ExFunc.COPY1,  Op1Sel.IMZ, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR, CsrCmd.C ),
-      ECALL ->  List( ExFunc.X,      Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,   CsrCmd.E ),
+      ECALL ->  List( ExFunc.ECALL,  Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,   CsrCmd.E ),
       PCNT ->   List( ExFunc.PCNT,   Op1Sel.RS1, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
       MUL ->    List( ExFunc.MUL,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),
       MULH ->   List( ExFunc.MULH,   Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU, CsrCmd.X ),

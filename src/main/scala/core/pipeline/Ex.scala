@@ -9,17 +9,15 @@ import common.RenSel
 import common.CsrCmd
 import common.MenSel
 import common.ExFunc
+import core.CsrFileIo
 
 class Ex2IfIo extends Bundle {
-  val br_flg = Output(Bool())
-  val br_target = Output(UInt(WORD_LEN.W))
-  val jmp_flg = Output(Bool())
-  val alu_out = Output(UInt(WORD_LEN.W))
+  val branch_taken = Output(Bool())
+  val branch_target = Output(UInt(WORD_LEN.W))
 }
 
 class Ex2IdIo extends Bundle {
-  val br_flg = Output(Bool())
-  val jmp_flg = Output(Bool())
+  val branch_taken = Output(Bool())
 }
 
 class Ex2MeIo extends Bundle {
@@ -40,6 +38,7 @@ class Ex2MeIo extends Bundle {
 
 class ExUnit extends Module {
   val io = IO(new Bundle {
+    val csrfile_mtvec = Input(UInt(WORD_LEN.W))
     val id2ex = Flipped(new Id2ExIo())
     val ex2if = new Ex2IfIo()
     val ex2id = new Ex2IdIo()
@@ -114,13 +113,24 @@ class ExUnit extends Module {
   val br_target = io.id2ex.pc + io.id2ex.imm_b_sext
 
   val jmp_flg = (io.id2ex.wb_sel === WbSel.PC)
+  val jmp_target = alu_out
 
-  io.ex2if.br_flg := br_flg
-  io.ex2if.br_target := br_target
-  io.ex2if.jmp_flg := jmp_flg
-  io.ex2if.alu_out := alu_out
-  io.ex2id.br_flg := br_flg
-  io.ex2id.jmp_flg := jmp_flg
+  val ecall_flg = (io.id2ex.exe_fun === ExFunc.ECALL)
+  val ecall_target = io.csrfile_mtvec
+
+  val branch_taken = br_flg || jmp_flg || ecall_flg
+  val branch_target = MuxCase(
+    0.U(WORD_LEN.W),
+    Seq(
+      br_flg -> br_target,
+      jmp_flg -> jmp_target,
+      ecall_flg -> ecall_target
+    )
+  )
+
+  io.ex2if.branch_taken := branch_taken
+  io.ex2if.branch_target := branch_target
+  io.ex2id.branch_taken := branch_taken
   io.ex2me.pc := RegNext(io.id2ex.pc)
   io.ex2me.inst_id := RegNext(io.id2ex.inst_id)
   io.ex2me.op1_data := RegNext(io.id2ex.op1_data)

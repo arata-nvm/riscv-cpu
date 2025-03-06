@@ -15,7 +15,6 @@ class If2IdIo extends Bundle {
 class IfUnit extends Module {
   val io = IO(new Bundle {
     val imem = Flipped(new ImemPortIo())
-    val csrfile_mtvec = Input(UInt(WORD_LEN.W))
     val if2id = new If2IdIo()
     val id2if = Flipped(new Id2IfIo())
     val ex2if = Flipped(new Ex2IfIo())
@@ -33,9 +32,7 @@ class IfUnit extends Module {
   val pc_next = MuxCase(
     pc_plus4,
     Seq(
-      io.ex2if.br_flg -> io.ex2if.br_target,
-      io.ex2if.jmp_flg -> io.ex2if.alu_out,
-      (inst === ECALL) -> io.csrfile_mtvec,
+      io.ex2if.branch_taken -> io.ex2if.branch_target,
       io.id2if.stall_flg -> reg_pc
     )
   )
@@ -45,7 +42,7 @@ class IfUnit extends Module {
   reg_inst := MuxCase(
     inst,
     Seq(
-      (io.ex2if.br_flg || io.ex2if.jmp_flg) -> BUBBLE,
+      io.ex2if.branch_taken -> BUBBLE,
       io.id2if.stall_flg -> reg_inst
     )
   )
