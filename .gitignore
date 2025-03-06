@@ -341,3 +341,6 @@ hs_err_pid*
 
 .bloop
 .metals
+
+Top.anno.json
+Top.sv
