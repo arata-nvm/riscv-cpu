@@ -8,7 +8,7 @@ import core.DmemPortIo
 import core.CsrFileIo
 import common.RenSel
 import common.WbSel
-import common.MenSel
+import core.MenSel
 
 class Me2IdIo extends Bundle {
   val rf_wen = Output(RenSel())
@@ -34,7 +34,7 @@ class MeUnit extends Module {
   })
 
   io.dmem.addr := io.ex2me.alu_out
-  io.dmem.wen := io.ex2me.mem_wen === MenSel.S
+  io.dmem.wen := io.ex2me.mem_wen
   io.dmem.wdata := io.ex2me.rs2_data
 
   io.csrfile.cmd := io.ex2me.csr_cmd
@@ -44,7 +44,11 @@ class MeUnit extends Module {
   val mem_pc_plus4 = io.ex2me.pc + 4.U(WORD_LEN.W)
   val wb_data = MuxLookup(io.ex2me.wb_sel, io.ex2me.alu_out)(
     Seq(
-      WbSel.MEM -> io.dmem.rdata,
+      WbSel.MEMB -> io.dmem.rdatab,
+      WbSel.MEMBU -> io.dmem.rdatabu,
+      WbSel.MEMH -> io.dmem.rdatah,
+      WbSel.MEMHU -> io.dmem.rdatahu,
+      WbSel.MEMW -> io.dmem.rdataw,
       WbSel.PC -> mem_pc_plus4,
       WbSel.CSR -> io.csrfile.rdata
     )

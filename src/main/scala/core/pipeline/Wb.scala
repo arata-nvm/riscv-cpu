@@ -20,7 +20,7 @@ class WbUnit extends Module {
     val me2wb = Flipped(new Me2WbIo())
   })
 
-  io.regfile_rd.wen := (io.me2wb.rf_wen === RenSel.S)
+  io.regfile_rd.wen := (io.me2wb.rf_wen =/= RenSel.X)
   io.regfile_rd.addr := io.me2wb.wb_addr
   io.regfile_rd.data := io.me2wb.wb_data
 

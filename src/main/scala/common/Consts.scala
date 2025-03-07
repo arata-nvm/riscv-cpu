@@ -1,6 +1,7 @@
 package common
 
 import chisel3._
+import chisel3.util.BitPat
 
 object ExFunc extends ChiselEnum {
   val X, ADD, SUB, AND, OR, XOR, SLL, SRL, SRA, SLT, SLTU, BEQ, BNE, BLT, BGE,
@@ -17,16 +18,12 @@ object Op2Sel extends ChiselEnum {
   val X, RS2, IMI, IMS, IMJ, IMU = Value
 }
 
-object MenSel extends ChiselEnum {
-  val X, S = Value
-}
-
 object RenSel extends ChiselEnum {
   val X, S = Value
 }
 
 object WbSel extends ChiselEnum {
-  val X, ALU, MEM, PC, CSR = Value
+  val X, ALU, MEMB, MEMH, MEMW, MEMBU, MEMHU, PC, CSR = Value
 }
 
 object MwSel extends ChiselEnum {

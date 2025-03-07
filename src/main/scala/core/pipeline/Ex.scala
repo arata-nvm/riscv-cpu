@@ -7,7 +7,7 @@ import common.Instructions._
 import common.WbSel
 import common.RenSel
 import common.CsrCmd
-import common.MenSel
+import core.MenSel
 import common.ExFunc
 import core.CsrFileIo
 

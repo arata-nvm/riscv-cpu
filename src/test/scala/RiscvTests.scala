@@ -12,8 +12,14 @@ class RiscvTests extends AnyFlatSpec with ChiselScalatestTester {
   val hexDir = "src/hex/riscv-tests/"
 
   val memoryFiles = Seq(
-    "rv32ui-p-sw.hex",
+    "rv32ui-p-lb.hex",
+    "rv32ui-p-lh.hex",
     "rv32ui-p-lw.hex",
+    "rv32ui-p-lbu.hex",
+    "rv32ui-p-lhu.hex",
+    "rv32ui-p-sh.hex",
+    "rv32ui-p-sb.hex",
+    "rv32ui-p-sw.hex",
     "rv32ui-p-add.hex",
     "rv32ui-p-addi.hex",
     "rv32ui-p-sub.hex",
