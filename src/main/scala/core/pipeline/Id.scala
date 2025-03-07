@@ -109,7 +109,7 @@ class IdUnit extends Module {
   // format: off
   val csignals = ListLookup(
     inst,
-    List(ExFunc.X, Op1Sel.X, Op2Sel.X, MenSel.X, RenSel.X, WbSel.X, CsrCmd.X),
+                List( ExFunc.X,      Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,     CsrCmd.X ),
     Array(
       LB ->     List( ExFunc.ADD,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.MEMB,  CsrCmd.X ),
       LH ->     List( ExFunc.ADD,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.MEMH,  CsrCmd.X ),
