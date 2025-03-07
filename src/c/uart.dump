@@ -1,0 +1,62 @@
+
+uart:     file format elf32-littleriscv
+
+
+Disassembly of section .text.startup:
+
+00000000 <main>:
+   0:	100007b7          	lui	a5,0x10000
+   4:	04800713          	li	a4,72
+   8:	00e78023          	sb	a4,0(a5) # 10000000 <main+0x10000000>
+   c:	06500713          	li	a4,101
+  10:	00e78023          	sb	a4,0(a5)
+  14:	06c00713          	li	a4,108
+  18:	00e78023          	sb	a4,0(a5)
+  1c:	00e78023          	sb	a4,0(a5)
+  20:	06f00693          	li	a3,111
+  24:	00d78023          	sb	a3,0(a5)
+  28:	02000613          	li	a2,32
+  2c:	00c78023          	sb	a2,0(a5)
+  30:	05700613          	li	a2,87
+  34:	00c78023          	sb	a2,0(a5)
+  38:	00d78023          	sb	a3,0(a5)
+  3c:	07200693          	li	a3,114
+  40:	00d78023          	sb	a3,0(a5)
+  44:	00e78023          	sb	a4,0(a5)
+  48:	06400713          	li	a4,100
+  4c:	00e78023          	sb	a4,0(a5)
+  50:	02100713          	li	a4,33
+  54:	00e78023          	sb	a4,0(a5)
+  58:	00a00713          	li	a4,10
+  5c:	00e78023          	sb	a4,0(a5)
+  60:	c0001073          	unimp
+  64:	00000513          	li	a0,0
+  68:	00008067          	ret
+
+Disassembly of section .comment:
+
+00000000 <.comment>:
+   0:	3a434347          	fmsub.d	ft6,ft6,ft4,ft7,rmm
+   4:	2820                	fld	fs0,80(s0)
+   6:	29554e47          	fmsub.s	ft8,fa0,fs5,ft5,rmm
+   a:	3920                	fld	fs0,112(a0)
+   c:	322e                	fld	ft4,232(sp)
+   e:	302e                	fld	ft0,232(sp)
+	...
+
+Disassembly of section .riscv.attributes:
+
+00000000 <.riscv.attributes>:
+   0:	1b41                	addi	s6,s6,-16
+   2:	0000                	unimp
+   4:	7200                	flw	fs0,32(a2)
+   6:	7369                	lui	t1,0xffffa
+   8:	01007663          	bgeu	zero,a6,14 <main+0x14>
+   c:	0011                	c.nop	4
+   e:	0000                	unimp
+  10:	1004                	addi	s1,sp,32
+  12:	7205                	lui	tp,0xfffe1
+  14:	3376                	fld	ft6,376(sp)
+  16:	6932                	flw	fs2,12(sp)
+  18:	7032                	flw	ft0,44(sp)
+  1a:	0030                	addi	a2,sp,8
