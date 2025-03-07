@@ -22,6 +22,7 @@ class Ex2IdIo extends Bundle {
 
 class Ex2MeIo extends Bundle {
   val pc = Output(UInt(WORD_LEN.W))
+  val inst = Output(UInt(WORD_LEN.W))
   val inst_id = Output(UInt(WORD_LEN.W))
   val op1_data = Output(UInt(WORD_LEN.W))
   val op2_data = Output(UInt(WORD_LEN.W))
@@ -132,6 +133,7 @@ class ExUnit extends Module {
   io.ex2if.branch_target := branch_target
   io.ex2id.branch_taken := branch_taken
   io.ex2me.pc := RegNext(io.id2ex.pc)
+  io.ex2me.inst := RegNext(io.id2ex.inst)
   io.ex2me.inst_id := RegNext(io.id2ex.inst_id)
   io.ex2me.op1_data := RegNext(io.id2ex.op1_data)
   io.ex2me.op2_data := RegNext(io.id2ex.op2_data)

@@ -16,8 +16,9 @@ class Core(suppressLog: Boolean) extends Module {
     val dmem = Flipped(new DmemPortIo())
     val regfile = Flipped(new RegFileIo())
     val csrfile = Flipped(new CsrFileIo())
-    val exit = Output(Bool())
     val gp = Output(UInt(WORD_LEN.W))
+    val pc = Output(UInt(WORD_LEN.W))
+    val inst = Output(UInt(WORD_LEN.W))
   })
 
   val if_unit = Module(new IfUnit())
@@ -50,8 +51,9 @@ class Core(suppressLog: Boolean) extends Module {
   // Debug
 
   io.gp := io.regfile.gp
-  // io.exit := (id_reg_inst === UNIMP)
-  io.exit := (me_unit.io.me2wb.pc === 0x44.U(WORD_LEN.W))
+  io.pc := ex_unit.io.ex2me.pc
+  io.inst := ex_unit.io.ex2me.inst
+
   if (!suppressLog) {
     printf("--------------------\n")
     printf("--- if ---\n")

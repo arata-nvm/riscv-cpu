@@ -71,7 +71,7 @@ class RiscvTests extends AnyFlatSpec with ChiselScalatestTester {
           step(1)
 
           var cycles = 0
-          while (peek(c.io.exit) == 0) {
+          while (peek(c.io.pc).toInt != 0x44) {
             assert(cycles <= 1000, "timeout")
             step(1)
             cycles += 1

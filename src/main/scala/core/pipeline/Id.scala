@@ -15,6 +15,7 @@ class Id2IfIo extends Bundle {
 
 class Id2ExIo extends Bundle {
   val pc = Output(UInt(WORD_LEN.W))
+  val inst = Output(UInt(WORD_LEN.W))
   val inst_id = Output(UInt(WORD_LEN.W))
   val op1_data = Output(UInt(WORD_LEN.W))
   val op2_data = Output(UInt(WORD_LEN.W))
@@ -195,6 +196,7 @@ class IdUnit extends Module {
 
   io.id2if.stall_flg := stall_flg
   io.id2ex.pc := RegNext(io.if2id.pc)
+  io.id2ex.inst := RegNext(inst)
   io.id2ex.inst_id := RegNext(inst_id)
   io.id2ex.wb_addr := RegNext(wb_addr)
   io.id2ex.op1_data := RegNext(op1_data)
