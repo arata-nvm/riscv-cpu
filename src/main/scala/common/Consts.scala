@@ -52,4 +52,5 @@ object Consts {
   val CSR_NUM = 1 << CSR_ADDR_LEN
   val CSR_ADDR_MTVEC = 0x305.U(CSR_ADDR_LEN.W)
   val CSR_ADDR_MCAUSE = 0x342.U(CSR_ADDR_LEN.W)
+  val CSR_ADDR_CYCLE = 0xc00.U(CSR_ADDR_LEN.W)
 }
