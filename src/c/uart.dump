@@ -7,7 +7,7 @@ Disassembly of section .text.startup:
 00000000 <main>:
    0:	100007b7          	lui	a5,0x10000
    4:	04800713          	li	a4,72
-   8:	00e78023          	sb	a4,0(a5) # 10000000 <main+0x10000000>
+   8:	00e78023          	sb	a4,0(a5) # 10000000 <__bss_end+0xfffff94>
    c:	06500713          	li	a4,101
   10:	00e78023          	sb	a4,0(a5)
   14:	06c00713          	li	a4,108

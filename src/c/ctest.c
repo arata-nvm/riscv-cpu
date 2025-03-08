@@ -1,7 +1,7 @@
 int main() {
-  const unsigned int x = 1;
-  const unsigned int y = 2;
-  unsigned int z = x + y;
+  volatile const unsigned int x = 1;
+  volatile const unsigned int y = 2;
+  volatile unsigned int z = x + y;
   if (z == 1) {
     z = z + 1;
   } else {

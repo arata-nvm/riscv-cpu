@@ -1,18 +1,31 @@
-CC=riscv64-unknown-elf-gcc
-CCFLAGS=-O2 -march=rv32i -mabi=ilp32
+GCC_PREFIX = riscv64-unknown-elf-
 
-LD=riscv64-unknown-elf-ld
-LDFLAGS=-b elf32-littleriscv -T link.ld
-
-OBJCOPY=riscv64-unknown-elf-objcopy
-
+CC=$(GCC_PREFIX)gcc
+LD=$(GCC_PREFIX)ld
+OBJCOPY=$(GCC_PREFIX)objcopy
+OBJDUMP=$(GCC_PREFIX)objdump
 OD=od
+RM=rm
+
+ARCH=rv32i
+
+CCFLAGS=-O2 \
+				-fno-stack-protector \
+				-fno-zero-initialized-in-bss \
+				-ffreestanding \
+				-fno-builtin \
+				-nostdlib \
+				-nodefaultlibs \
+				-nostartfiles \
+				-mstrict-align \
+				-march=$(ARCH) \
+				-mabi=ilp32
+
+LDFLAGS=-T link.ld
+
 ODFLAGS=-An -tx1 -w1 -v
 
-OBJDUMP=riscv64-unknown-elf-objdump
 OBJDUMPFLAGS=-b elf32-littleriscv -D
-
-RM=rm
 
 %: %.c
 	$(CC) $(CCFLAGS) -c -o $@.o $<
@@ -20,6 +33,6 @@ RM=rm
 	$(OBJCOPY) -O binary $@ $@.bin
 	$(OD) $(ODFLAGS) $@.bin > ../hex/$@.hex
 	$(OBJDUMP) $(OBJDUMPFLAGS) $@ > ./$@.dump
-	rm -f $@.o
-	rm -f $@
-	rm -f $@.bin
+	$(RM) -f $@.o
+	$(RM) -f $@
+	$(RM) -f $@.bin
