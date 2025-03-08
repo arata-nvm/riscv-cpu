@@ -33,7 +33,7 @@ class Top(memoryFile: String, suppressLog: Boolean) extends Module {
 
 object Elaborate extends App {
   ChiselStage.emitSystemVerilogFile(
-    new Top("src/hex/pcnt.hex", false),
+    new Top("src/hex/coremark.hex", false),
     firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info")
   )
 }
