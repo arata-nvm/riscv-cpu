@@ -46,6 +46,12 @@ class ExUnit extends Module {
     val ex2me = new Ex2MeIo()
   })
 
+  when(io.id2ex.exe_fun === ExFunc.INVALID) {
+    printf("ExUnit: invalid instruction\n")
+    printf("ExUnit: pc: %x\n", io.id2ex.pc)
+    printf("ExUnit: inst: %x\n", io.id2ex.inst)
+  }
+
   val alu_out = MuxLookup(io.id2ex.exe_fun, 0.U(WORD_LEN.W))(
     Seq(
       ExFunc.ADD -> (io.id2ex.op1_data + io.id2ex.op2_data),

@@ -6,7 +6,7 @@ import chisel3.util.BitPat
 object ExFunc extends ChiselEnum {
   val X, ADD, SUB, AND, OR, XOR, SLL, SRL, SRA, SLT, SLTU, BEQ, BNE, BLT, BGE,
       BLTU, BGEU, JALR, COPY1, PCNT, MUL, MULH, MULHU, MULHSU, DIV, DIVU, REM,
-      REMU, ECALL =
+      REMU, ECALL, INVALID =
     Value
 }
 
