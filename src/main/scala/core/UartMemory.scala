@@ -13,13 +13,9 @@ class UartMemory extends Module {
     val dmem = new DmemPortIo()
   })
 
-  io.dmem.rdatab := 0.U(WORD_LEN.W)
-  io.dmem.rdatabu := 0.U(WORD_LEN.W)
-  io.dmem.rdatah := 0.U(WORD_LEN.W)
-  io.dmem.rdatahu := 0.U(WORD_LEN.W)
-  io.dmem.rdataw := 0.U(WORD_LEN.W)
+  io.dmem.rdata := 0.U(WORD_LEN.W)
 
-  when(io.dmem.wen === MenSel.B && io.dmem.addr === UartAddr.UART_TX_DATA) {
+  when(io.dmem.wen === MenSel.B && io.dmem.waddr === UartAddr.UART_TX_DATA) {
     printf("%c", io.dmem.wdata(7, 0))
   }
 }

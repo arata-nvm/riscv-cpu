@@ -33,8 +33,9 @@ class MeUnit extends Module {
     val me2wb = new Me2WbIo()
   })
 
-  io.dmem.addr := io.ex2me.alu_out
+  io.dmem.raddr := io.ex2me.alu_out
   io.dmem.wen := io.ex2me.mem_wen
+  io.dmem.waddr := io.ex2me.alu_out
   io.dmem.wdata := io.ex2me.rs2_data
 
   io.csrfile.cmd := io.ex2me.csr_cmd
@@ -42,13 +43,14 @@ class MeUnit extends Module {
   io.csrfile.wdata := io.ex2me.op1_data
 
   val mem_pc_plus4 = io.ex2me.pc + 4.U(WORD_LEN.W)
+  val mem_rdata = io.dmem.rdata
   val wb_data = MuxLookup(io.ex2me.wb_sel, io.ex2me.alu_out)(
     Seq(
-      WbSel.MEMB -> io.dmem.rdatab,
-      WbSel.MEMBU -> io.dmem.rdatabu,
-      WbSel.MEMH -> io.dmem.rdatah,
-      WbSel.MEMHU -> io.dmem.rdatahu,
-      WbSel.MEMW -> io.dmem.rdataw,
+      WbSel.MEMB -> Cat(Fill(24, mem_rdata(7)), mem_rdata(7, 0)),
+      WbSel.MEMBU -> Cat(Fill(24, 0.U), mem_rdata(7, 0)),
+      WbSel.MEMH -> Cat(Fill(16, mem_rdata(15)), mem_rdata(15, 0)),
+      WbSel.MEMHU -> Cat(Fill(16, 0.U), mem_rdata(15, 0)),
+      WbSel.MEMW -> mem_rdata,
       WbSel.PC -> mem_pc_plus4,
       WbSel.CSR -> io.csrfile.rdata
     )
