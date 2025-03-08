@@ -156,7 +156,6 @@ class IdUnit extends Module {
       CSRRC ->  List( ExFunc.COPY1,   Op1Sel.RS1, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR,   CsrCmd.C ),
       CSRRCI -> List( ExFunc.COPY1,   Op1Sel.IMZ, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR,   CsrCmd.C ),
       ECALL ->  List( ExFunc.ECALL,   Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,     CsrCmd.E ),
-      PCNT ->   List( ExFunc.PCNT,    Op1Sel.RS1, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.ALU,   CsrCmd.X ),
       MUL ->    List( ExFunc.MUL,     Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU,   CsrCmd.X ),
       MULH ->   List( ExFunc.MULH,    Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU,   CsrCmd.X ),
       MULHU ->  List( ExFunc.MULHU,   Op1Sel.RS1, Op2Sel.RS2, MenSel.X, RenSel.S, WbSel.ALU,   CsrCmd.X ),

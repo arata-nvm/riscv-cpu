@@ -70,7 +70,6 @@ class ExUnit extends Module {
         WORD_LEN.W
       )),
       ExFunc.COPY1 -> io.id2ex.op1_data,
-      ExFunc.PCNT -> PopCount(io.id2ex.op1_data),
       ExFunc.MUL -> (io.id2ex.op1_data * io.id2ex.op2_data),
       ExFunc.MULH -> (io.id2ex.op1_data.asSInt * io.id2ex.op2_data.asSInt)(
         WORD_LEN * 2 - 1,
