@@ -36,6 +36,7 @@ class Core(suppressLog: Boolean) extends Module {
   id_unit.io.id2ex <> ex_unit.io.id2ex
 
   ex_unit.io.csrfile_mtvec := io.csrfile.mtvec
+  ex_unit.io.csrfile_mepc := io.csrfile.mepc
   ex_unit.io.ex2if <> if_unit.io.ex2if
   ex_unit.io.ex2id <> id_unit.io.ex2id
   ex_unit.io.ex2me <> me_unit.io.ex2me

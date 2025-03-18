@@ -6,7 +6,7 @@ import chisel3.util.BitPat
 object ExFunc extends ChiselEnum {
   val X, ADD, SUB, AND, OR, XOR, SLL, SRL, SRA, SLT, SLTU, BEQ, BNE, BLT, BGE,
       BLTU, BGEU, JALR, COPY1, MUL, MULH, MULHU, MULHSU, DIV, DIVU, REM, REMU,
-      ECALL, MRET, INVALID =
+      ECALL, EBREAK, MRET, INVALID =
     Value
 }
 
@@ -23,7 +23,7 @@ object RenSel extends ChiselEnum {
 }
 
 object WbSel extends ChiselEnum {
-  val X, ALU, MEMB, MEMH, MEMW, MEMBU, MEMHU, PC, CSR = Value
+  val X, ALU, MEMB, MEMH, MEMW, MEMBU, MEMHU, PC, CSR, SC = Value
 }
 
 object MwSel extends ChiselEnum {
@@ -31,12 +31,17 @@ object MwSel extends ChiselEnum {
 }
 
 object CsrCmd extends ChiselEnum {
-  val X, W, S, C, E, V = Value
+  val X, W, S, C = Value
+}
+
+object AmoSel extends ChiselEnum {
+  val X, ADD, SWAP, LR, SC, OR, AND = Value
 }
 
 object Consts {
   val WORD_LEN = 32
-  val START_ADDR = 0.U(WORD_LEN.W)
+  val DWORD_LEN = 64
+  val START_ADDR = "x_80000000".U(WORD_LEN.W)
 
   val INST_LEN = 4.U(WORD_LEN.W)
   val BUBBLE = "x_00000013".U(WORD_LEN.W) // [ADDI x0,x0,0] = BUBBLE
@@ -47,7 +52,8 @@ object Consts {
 
   val CSR_ADDR_LEN = 12
   val CSR_NUM = 1 << CSR_ADDR_LEN
-  val CSR_ADDR_MTVEC = 0x305.U(CSR_ADDR_LEN.W)
-  val CSR_ADDR_MCAUSE = 0x342.U(CSR_ADDR_LEN.W)
-  val CSR_ADDR_CYCLE = 0xc00.U(CSR_ADDR_LEN.W)
+
+  // Exception Code: Breakpoint = 3
+  val EXC_BREAKPOINT = 3.U(WORD_LEN.W)
+  val EXC_ECALL = 11.U(WORD_LEN.W)
 }

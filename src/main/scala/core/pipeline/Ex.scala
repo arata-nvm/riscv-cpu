@@ -10,6 +10,7 @@ import common.CsrCmd
 import core.MenSel
 import common.ExFunc
 import core.CsrFileIo
+import common.AmoSel
 
 class Ex2IfIo extends Bundle {
   val branch_taken = Output(Bool())
@@ -26,6 +27,7 @@ class Ex2MeIo extends Bundle {
   val inst_id = Output(UInt(WORD_LEN.W))
   val op1_data = Output(UInt(WORD_LEN.W))
   val op2_data = Output(UInt(WORD_LEN.W))
+  val rs1_data = Output(UInt(WORD_LEN.W))
   val rs2_data = Output(UInt(WORD_LEN.W))
   val imm_z_uext = Output(UInt(WORD_LEN.W))
   val alu_out = Output(UInt(WORD_LEN.W))
@@ -35,11 +37,16 @@ class Ex2MeIo extends Bundle {
   val rf_wen = Output(RenSel())
   val wb_sel = Output(WbSel())
   val wb_addr = Output(UInt(WORD_LEN.W))
+  val amo_sel = Output(AmoSel())
+  val trap_valid = Output(Bool())
+  val trap_pc = Output(UInt(WORD_LEN.W))
+  val trap_code = Output(UInt(WORD_LEN.W))
 }
 
 class ExUnit extends Module {
   val io = IO(new Bundle {
     val csrfile_mtvec = Input(UInt(WORD_LEN.W))
+    val csrfile_mepc = Input(UInt(WORD_LEN.W))
     val id2ex = Flipped(new Id2ExIo())
     val ex2if = new Ex2IfIo()
     val ex2id = new Ex2IdIo()
@@ -121,8 +128,12 @@ class ExUnit extends Module {
   val jmp_flg = (io.id2ex.wb_sel === WbSel.PC)
   val jmp_target = alu_out
 
-  val ecall_flg = (io.id2ex.exe_fun === ExFunc.ECALL)
+  val ecall_flg =
+    (io.id2ex.exe_fun === ExFunc.ECALL || io.id2ex.exe_fun === ExFunc.EBREAK)
   val ecall_target = io.csrfile_mtvec
+
+  val mret_flg = (io.id2ex.exe_fun === ExFunc.MRET)
+  val mret_target = io.csrfile_mepc
 
   val branch_taken = br_flg || jmp_flg || ecall_flg
   val branch_target = MuxCase(
@@ -130,7 +141,8 @@ class ExUnit extends Module {
     Seq(
       br_flg -> br_target,
       jmp_flg -> jmp_target,
-      ecall_flg -> ecall_target
+      ecall_flg -> ecall_target,
+      mret_flg -> mret_target
     )
   )
 
@@ -142,6 +154,7 @@ class ExUnit extends Module {
   io.ex2me.inst_id := RegNext(io.id2ex.inst_id)
   io.ex2me.op1_data := RegNext(io.id2ex.op1_data)
   io.ex2me.op2_data := RegNext(io.id2ex.op2_data)
+  io.ex2me.rs1_data := RegNext(io.id2ex.rs1_data)
   io.ex2me.rs2_data := RegNext(io.id2ex.rs2_data)
   io.ex2me.imm_z_uext := RegNext(io.id2ex.imm_z_uext)
   io.ex2me.alu_out := RegNext(alu_out)
@@ -151,4 +164,8 @@ class ExUnit extends Module {
   io.ex2me.rf_wen := RegNext(io.id2ex.rf_wen)
   io.ex2me.wb_sel := RegNext(io.id2ex.wb_sel)
   io.ex2me.wb_addr := RegNext(io.id2ex.wb_addr)
+  io.ex2me.amo_sel := RegNext(io.id2ex.amo_sel)
+  io.ex2me.trap_valid := RegNext(io.id2ex.trap_valid)
+  io.ex2me.trap_pc := RegNext(io.id2ex.trap_pc)
+  io.ex2me.trap_code := RegNext(io.id2ex.trap_code)
 }
