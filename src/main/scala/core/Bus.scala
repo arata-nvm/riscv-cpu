@@ -14,6 +14,8 @@ object MemRange {
   val RAM_MASK = 0x3ffffff.U(WORD_LEN.W)
   val UART = BitPat("b00010000_00000000_00000000_????????")
   val UART_MASK = 0xff.U(WORD_LEN.W)
+  val CLINT = BitPat("b00010001_00000000_????????_????????")
+  val CLINT_MASK = 0xffff.U(WORD_LEN.W)
 }
 
 class Bus extends Module {
@@ -21,6 +23,7 @@ class Bus extends Module {
     val dmem_in = new DmemPortIo()
     val dmem_out_memory = Flipped(new DmemPortIo())
     val dmem_out_uart = Flipped(new DmemPortIo())
+    val dmem_out_clint = Flipped(new DmemPortIo())
   })
 
   def addr_to_sel(addr: UInt): MemSel.Type = {
@@ -29,6 +32,7 @@ class Bus extends Module {
       Seq(
         (addr === MemRange.RAM) -> MemSel.RAM,
         (addr === MemRange.UART) -> MemSel.UART,
+        (addr === MemRange.CLINT) -> MemSel.CLINT
       )
     )
   }
@@ -54,10 +58,16 @@ class Bus extends Module {
   io.dmem_out_uart.waddr := io.dmem_in.waddr & MemRange.UART_MASK
   io.dmem_out_uart.wdata := io.dmem_in.wdata
 
+  io.dmem_out_clint.raddr := io.dmem_in.raddr & MemRange.CLINT_MASK
+  io.dmem_out_clint.wen := Mux(wsel === MemSel.CLINT, io.dmem_in.wen, MenSel.X)
+  io.dmem_out_clint.waddr := io.dmem_in.waddr & MemRange.CLINT_MASK
+  io.dmem_out_clint.wdata := io.dmem_in.wdata
+
   io.dmem_in.rdata := MuxLookup(rsel, 0.U(WORD_LEN.W))(
     Seq(
       MemSel.RAM -> io.dmem_out_memory.rdata,
       MemSel.UART -> io.dmem_out_uart.rdata,
+      MemSel.CLINT -> io.dmem_out_clint.rdata
     )
   )
 }

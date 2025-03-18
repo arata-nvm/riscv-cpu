@@ -19,6 +19,7 @@ class Top(memoryFile: String, suppressLog: Boolean) extends Module {
   val bus = Module(new Bus())
   val memory = Module(new Memory(memoryFile))
   val uart_memory = Module(new UartMemory())
+  val clint_memory = Module(new ClintMemory())
 
   core.io.imem <> memory.io.imem
   core.io.dmem <> bus.io.dmem_in
@@ -26,6 +27,9 @@ class Top(memoryFile: String, suppressLog: Boolean) extends Module {
   core.io.csrfile <> csrfile.io
   bus.io.dmem_out_memory <> memory.io.dmem
   bus.io.dmem_out_uart <> uart_memory.io.dmem
+  bus.io.dmem_out_clint <> clint_memory.io.dmem
+  clint_memory.io.csrfile_mtimecmp <> csrfile.io.mtimecmp
+  clint_memory.io.csrfile_mtime <> csrfile.io.mtime
   io.gp := core.io.gp
   io.pc := core.io.pc
   io.inst := core.io.inst
