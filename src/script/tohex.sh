@@ -1,14 +1,9 @@
 #!/bin/bash
 
-FILES=/src/target/share/riscv-tests/isa/rv32*
-SAVE_DIR=/src/src/riscv
+f=$1
+SAVE_DIR=/src/src/hex
 
-for f in $FILES
-do
-  FILE_NAME="${f##*/}"
-  if [[ ! $f =~ "dump" ]]; then
-    riscv64-unknown-elf-objcopy -O binary $f $SAVE_DIR/$FILE_NAME.bin
-    od -An -tx1 -w1 -v $SAVE_DIR/$FILE_NAME.bin > $SAVE_DIR/$FILE_NAME.hex
-    rm -f $SAVE_DIR/$FILE_NAME.bin
-  fi
-done
+FILE_NAME="${f##*/}"
+# riscv64-unknown-elf-objcopy -O binary $f $SAVE_DIR/$FILE_NAME.bin
+od -An -tx1 -w1 -v $FILE_NAME > $SAVE_DIR/$FILE_NAME.hex
+rm -f $SAVE_DIR/$FILE_NAME.bin
