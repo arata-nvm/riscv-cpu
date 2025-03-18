@@ -22,10 +22,20 @@ class RegFileIo extends Bundle {
   val gp = Output(UInt(WORD_LEN.W))
 }
 
+object Registers {
+  val R0 = 10
+  val R1 = 11
+}
+
 class RegFile extends Module {
   val io = IO(new RegFileIo())
 
   val regfile = Mem(REG_NUM, UInt(WORD_LEN.W))
+
+  when(reset.asBool) {
+    regfile(Registers.R0) := 0.U(WORD_LEN.W)
+    regfile(Registers.R1) := "x_803ffa00".U(WORD_LEN.W)
+  }
 
   io.rs1.data := regfile(io.rs1.addr)
   io.rs2.data := regfile(io.rs2.addr)
