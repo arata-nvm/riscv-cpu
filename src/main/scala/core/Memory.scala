@@ -28,7 +28,7 @@ class Memory(memoryFile: String) extends Module {
     val dmem = new DmemPortIo()
   })
 
-  val mem = Mem(0x10000, UInt(8.W))
+  val mem = Mem(0x4000000, UInt(8.W))
 
   if (memoryFile.nonEmpty) {
     loadMemoryFromFileInline(mem, memoryFile)
