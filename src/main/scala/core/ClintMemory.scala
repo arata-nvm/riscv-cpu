@@ -12,21 +12,20 @@ object ClintAddr {
 class ClintMemory extends Module {
   val io = IO(new Bundle {
     val dmem = new DmemPortIo()
-    val csrfile_mtimecmp = Flipped(new CsrIo())
-    val csrfile_mtime = Flipped(new CsrIo())
+    val csrfile_regs_rw = Flipped(new CsrReadWriteRegsIo())
   })
 
   io.dmem.rdata := MuxLookup(io.dmem.raddr, 0.U(WORD_LEN.W))(
     Seq(
-      ClintAddr.MTIMECMP -> io.csrfile_mtimecmp.rdata,
-      ClintAddr.MTIME -> io.csrfile_mtime.rdata
+      ClintAddr.MTIMECMP -> io.csrfile_regs_rw.mtimecmp.rdata,
+      ClintAddr.MTIME -> io.csrfile_regs_rw.mtime.rdata
     )
   )
 
-  io.csrfile_mtimecmp.wdata := io.dmem.wdata
-  io.csrfile_mtime.wdata := io.dmem.wdata
+  io.csrfile_regs_rw.mtimecmp.wdata := io.dmem.wdata
+  io.csrfile_regs_rw.mtime.wdata := io.dmem.wdata
 
   val wen = io.dmem.wen === MenSel.W
-  io.csrfile_mtimecmp.wen := wen && io.dmem.waddr === ClintAddr.MTIMECMP
-  io.csrfile_mtime.wen := wen && io.dmem.waddr === ClintAddr.MTIME
+  io.csrfile_regs_rw.mtimecmp.wen := wen && io.dmem.waddr === ClintAddr.MTIMECMP
+  io.csrfile_regs_rw.mtime.wen := wen && io.dmem.waddr === ClintAddr.MTIME
 }

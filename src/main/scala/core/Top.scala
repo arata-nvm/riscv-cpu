@@ -24,12 +24,13 @@ class Top(memoryFile: String, suppressLog: Boolean) extends Module {
   core.io.imem <> memory.io.imem
   core.io.dmem <> bus.io.dmem_in
   core.io.regfile <> regfile.io
-  core.io.csrfile <> csrfile.io
+  core.io.csrfile_regs_r <> csrfile.io.regs_r
+  core.io.csrfile_command <> csrfile.io.command
+  core.io.csrfile_trap <> csrfile.io.trap
   bus.io.dmem_out_memory <> memory.io.dmem
   bus.io.dmem_out_uart <> uart_memory.io.dmem
   bus.io.dmem_out_clint <> clint_memory.io.dmem
-  clint_memory.io.csrfile_mtimecmp <> csrfile.io.mtimecmp
-  clint_memory.io.csrfile_mtime <> csrfile.io.mtime
+  clint_memory.io.csrfile_regs_rw <> csrfile.io.regs_rw
   io.gp := core.io.gp
   io.pc := core.io.pc
   io.inst := core.io.inst

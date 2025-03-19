@@ -22,29 +22,46 @@ object MieMask {
   val MTIE = (1 << 7).U(WORD_LEN.W)
 }
 
-class CsrIo extends Bundle {
+class CsrReadRegsIo extends Bundle {
+  val mtvec = Output(UInt(WORD_LEN.W))
+  val mepc = Output(UInt(WORD_LEN.W))
+}
+
+class CsrReadWriteRegsIo extends Bundle {
+  val mtimecmp = new CsrReadWriteRegIo()
+  val mtime = new CsrReadWriteRegIo()
+}
+
+class CsrReadWriteRegIo extends Bundle {
   val rdata = Output(UInt(WORD_LEN.W))
   val wen = Input(Bool())
   val wdata = Input(UInt(CSR_ADDR_LEN.W))
 }
 
-class CsrFileIo extends Bundle {
+class CsrCommandIo extends Bundle {
   val cmd = Input(CsrCmd())
   val addr = Input(UInt(CSR_ADDR_LEN.W))
   val wdata = Input(UInt(WORD_LEN.W))
   val rdata = Output(UInt(WORD_LEN.W))
+}
 
-  val trap_valid = Input(Bool())
-  val trap_code = Input(UInt(WORD_LEN.W))
-  val trap_pc = Input(UInt(WORD_LEN.W))
+class CsrTrapIo extends Bundle {
+  val valid = Input(Bool())
+  val code = Input(UInt(WORD_LEN.W))
+  val pc = Input(UInt(WORD_LEN.W))
+}
 
-  val mtvec = Output(UInt(WORD_LEN.W))
-  val mepc = Output(UInt(WORD_LEN.W))
-  val mtimecmp = new CsrIo()
-  val mtime = new CsrIo()
+class CsrInterruptIo extends Bundle {
+  val valid = Output(Bool())
+  val code = Output(UInt(WORD_LEN.W))
+}
 
-  val interrupt_valid = Output(Bool())
-  val interrupt_code = Output(UInt(WORD_LEN.W))
+class CsrFileIo extends Bundle {
+  val command = new CsrCommandIo()
+  val regs_r = new CsrReadRegsIo()
+  val regs_rw = new CsrReadWriteRegsIo()
+  val trap = new CsrTrapIo()
+  // val interrupt = new CsrInterruptIo()
 }
 
 class CsrFile extends Module {
@@ -57,33 +74,36 @@ class CsrFile extends Module {
   regfile(CsrAddr.CYCLE) := regfile(CsrAddr.CYCLE) + 1.U
   reg_mtime := reg_mtime + 1.U
 
-  io.rdata := regfile(io.addr.asUInt)
-  when(io.cmd =/= CsrCmd.X) {
-    regfile(io.addr.asUInt) := MuxLookup(io.cmd, 0.U(WORD_LEN.W))(
+  io.command.rdata := regfile(io.command.addr.asUInt)
+  when(io.command.cmd =/= CsrCmd.X) {
+    regfile(io.command.addr.asUInt) := MuxLookup(
+      io.command.cmd,
+      0.U(WORD_LEN.W)
+    )(
       Seq(
-        CsrCmd.W -> io.wdata,
-        CsrCmd.S -> (io.rdata | io.wdata),
-        CsrCmd.C -> (io.rdata & ~io.wdata)
+        CsrCmd.W -> io.command.wdata,
+        CsrCmd.S -> (io.command.rdata | io.command.wdata),
+        CsrCmd.C -> (io.command.rdata & ~io.command.wdata)
       )
     )
   }
 
-  when(io.trap_valid) {
-    regfile(CsrAddr.MCAUSE) := io.trap_code
-    regfile(CsrAddr.MEPC) := io.trap_pc
+  when(io.trap.valid) {
+    regfile(CsrAddr.MCAUSE) := io.trap.code
+    regfile(CsrAddr.MEPC) := io.trap.pc
   }
 
-  io.mtvec := regfile(CsrAddr.MTVEC)
-  io.mepc := regfile(CsrAddr.MEPC)
+  io.regs_r.mtvec := regfile(CsrAddr.MTVEC)
+  io.regs_r.mepc := regfile(CsrAddr.MEPC)
 
-  io.mtimecmp.rdata := reg_mtimecmp
-  when(io.mtimecmp.wen) {
-    reg_mtimecmp := io.mtimecmp.wdata
+  io.regs_rw.mtimecmp.rdata := reg_mtimecmp
+  when(io.regs_rw.mtimecmp.wen) {
+    reg_mtimecmp := io.regs_rw.mtimecmp.wdata
   }
 
-  io.mtime.rdata := reg_mtime
-  when(io.mtime.wen) {
-    reg_mtime := io.mtime.wdata
+  io.regs_rw.mtime.rdata := reg_mtime
+  when(io.regs_rw.mtime.wen) {
+    reg_mtime := io.regs_rw.mtime.wdata
   }
 
   when(reg_mtimecmp =/= 0.U(WORD_LEN.W) && reg_mtime >= reg_mtimecmp) {

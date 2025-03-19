@@ -15,7 +15,9 @@ class Core(suppressLog: Boolean) extends Module {
     val imem = Flipped(new ImemPortIo())
     val dmem = Flipped(new DmemPortIo())
     val regfile = Flipped(new RegFileIo())
-    val csrfile = Flipped(new CsrFileIo())
+    val csrfile_regs_r = Flipped(new CsrReadRegsIo())
+    val csrfile_command = Flipped(new CsrCommandIo())
+    val csrfile_trap = Flipped(new CsrTrapIo())
     val gp = Output(UInt(WORD_LEN.W))
     val pc = Output(UInt(WORD_LEN.W))
     val inst = Output(UInt(WORD_LEN.W))
@@ -35,14 +37,14 @@ class Core(suppressLog: Boolean) extends Module {
   id_unit.io.id2if <> if_unit.io.id2if
   id_unit.io.id2ex <> ex_unit.io.id2ex
 
-  ex_unit.io.csrfile_mtvec := io.csrfile.mtvec
-  ex_unit.io.csrfile_mepc := io.csrfile.mepc
+  ex_unit.io.csrfile_regs_r <> io.csrfile_regs_r
   ex_unit.io.ex2if <> if_unit.io.ex2if
   ex_unit.io.ex2id <> id_unit.io.ex2id
   ex_unit.io.ex2me <> me_unit.io.ex2me
 
   me_unit.io.dmem <> io.dmem
-  me_unit.io.csrfile <> io.csrfile
+  me_unit.io.csrfile_command <> io.csrfile_command
+  me_unit.io.csrfile_trap <> io.csrfile_trap
   me_unit.io.me2id <> id_unit.io.me2id
   me_unit.io.me2wb <> wb_unit.io.me2wb
 
@@ -63,12 +65,19 @@ class Core(suppressLog: Boolean) extends Module {
     printf(p"inst_id          : 0x${Hexadecimal(if_unit.io.if2id.inst_id)}\n")
     printf("--- id ---\n")
     printf(p"pc               : 0x${Hexadecimal(id_unit.io.id2ex.pc)}\n")
+    printf(p"inst             : 0x${Hexadecimal(id_unit.io.id2ex.inst)}\n")
     printf(p"inst_id          : 0x${Hexadecimal(id_unit.io.id2ex.inst_id)}\n")
     printf(p"rs1_data         : 0x${Hexadecimal(id_unit.io.id2ex.rs1_data)}\n")
     printf(p"rs2_data         : 0x${Hexadecimal(id_unit.io.id2ex.rs2_data)}\n")
+    printf(
+      p"trap_valid       : 0x${Hexadecimal(id_unit.io.id2ex.trap_valid)}\n"
+    )
+    printf(p"trap_code        : 0x${Hexadecimal(id_unit.io.id2ex.trap_code)}\n")
+    printf(p"trap_pc          : 0x${Hexadecimal(id_unit.io.id2ex.trap_pc)}\n")
     printf(p"stall_flg        : 0x${Hexadecimal(id_unit.io.id2if.stall_flg)}\n")
     printf("--- ex ---\n")
     printf(p"pc               : 0x${Hexadecimal(ex_unit.io.ex2me.pc)}\n")
+    printf(p"inst             : 0x${Hexadecimal(ex_unit.io.ex2me.inst)}\n")
     printf(p"inst_id          : 0x${Hexadecimal(ex_unit.io.ex2me.inst_id)}\n")
     printf(p"reg_op1_data     : 0x${Hexadecimal(ex_unit.io.ex2me.op1_data)}\n")
     printf(p"reg_op2_data     : 0x${Hexadecimal(ex_unit.io.ex2me.op2_data)}\n")

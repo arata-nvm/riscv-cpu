@@ -9,8 +9,8 @@ import common.RenSel
 import common.CsrCmd
 import core.MenSel
 import common.ExFunc
-import core.CsrFileIo
 import common.AmoSel
+import core.CsrReadRegsIo
 
 class Ex2IfIo extends Bundle {
   val branch_taken = Output(Bool())
@@ -45,8 +45,7 @@ class Ex2MeIo extends Bundle {
 
 class ExUnit extends Module {
   val io = IO(new Bundle {
-    val csrfile_mtvec = Input(UInt(WORD_LEN.W))
-    val csrfile_mepc = Input(UInt(WORD_LEN.W))
+    val csrfile_regs_r = Flipped(new CsrReadRegsIo())
     val id2ex = Flipped(new Id2ExIo())
     val ex2if = new Ex2IfIo()
     val ex2id = new Ex2IdIo()
@@ -130,10 +129,10 @@ class ExUnit extends Module {
 
   val ecall_flg =
     (io.id2ex.exe_fun === ExFunc.ECALL || io.id2ex.exe_fun === ExFunc.EBREAK)
-  val ecall_target = io.csrfile_mtvec
+  val ecall_target = io.csrfile_regs_r.mtvec
 
   val mret_flg = (io.id2ex.exe_fun === ExFunc.MRET)
-  val mret_target = io.csrfile_mepc
+  val mret_target = io.csrfile_regs_r.mepc
 
   val branch_taken = br_flg || jmp_flg || ecall_flg
   val branch_target = MuxCase(

@@ -5,11 +5,12 @@ import chisel3.util._
 import common.Consts._
 import common.Instructions._
 import core.DmemPortIo
-import core.CsrFileIo
 import common.RenSel
 import common.WbSel
 import core.MenSel
 import common.AmoSel
+import core.CsrTrapIo
+import core.CsrCommandIo
 
 class Me2IdIo extends Bundle {
   val rf_wen = Output(RenSel())
@@ -28,7 +29,8 @@ class Me2WbIo extends Bundle {
 class MeUnit extends Module {
   val io = IO(new Bundle {
     val dmem = Flipped(new DmemPortIo())
-    val csrfile = Flipped(new CsrFileIo())
+    val csrfile_command = Flipped(new CsrCommandIo())
+    val csrfile_trap = Flipped(new CsrTrapIo())
     val ex2me = Flipped(new Ex2MeIo())
     val me2id = new Me2IdIo()
     val me2wb = new Me2WbIo()
@@ -75,21 +77,17 @@ class MeUnit extends Module {
       WbSel.MEMHU -> Cat(Fill(16, 0.U), mem_rdata(15, 0)),
       WbSel.MEMW -> mem_rdata,
       WbSel.PC -> mem_pc_plus4,
-      WbSel.CSR -> io.csrfile.rdata,
+      WbSel.CSR -> io.csrfile_command.rdata,
       WbSel.SC -> !reservation_valid
     )
   )
 
-  io.csrfile.cmd := io.ex2me.csr_cmd
-  io.csrfile.addr := io.ex2me.csr_addr
-  io.csrfile.wdata := io.ex2me.op1_data
-  io.csrfile.trap_valid := io.ex2me.trap_valid
-  io.csrfile.trap_pc := io.ex2me.trap_pc
-  io.csrfile.trap_code := io.ex2me.trap_code
-  io.csrfile.mtimecmp.wen := false.B
-  io.csrfile.mtimecmp.wdata := 0.U
-  io.csrfile.mtime.wen := false.B
-  io.csrfile.mtime.wdata := 0.U
+  io.csrfile_command.cmd := io.ex2me.csr_cmd
+  io.csrfile_command.addr := io.ex2me.csr_addr
+  io.csrfile_command.wdata := io.ex2me.op1_data
+  io.csrfile_trap.valid := io.ex2me.trap_valid
+  io.csrfile_trap.pc := io.ex2me.trap_pc
+  io.csrfile_trap.code := io.ex2me.trap_code
 
   io.me2id.rf_wen := io.ex2me.rf_wen
   io.me2id.wb_addr := io.ex2me.wb_addr
