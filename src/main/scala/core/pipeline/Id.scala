@@ -8,12 +8,20 @@ import core.ImemPortIo
 import core.RegFileReaderIo
 import common._
 import core.MenSel
+import core.CsrReadRegsIo
+import core.CsrMipMask
+import core.CsrMstatusMask
+import core.CsrMieMask
+import core.CsrTrapIo
 
 class Id2IfIo extends Bundle {
   val stall_flg = Output(Bool())
 }
 
 class Id2ExIo extends Bundle {
+  val out_pc = Output(UInt(WORD_LEN.W))
+  val out_pc_valid = Output(Bool())
+
   val pc = Output(UInt(WORD_LEN.W))
   val inst = Output(UInt(WORD_LEN.W))
   val inst_id = Output(UInt(WORD_LEN.W))
@@ -37,12 +45,14 @@ class Id2ExIo extends Bundle {
   val trap_valid = Output(Bool())
   val trap_pc = Output(UInt(WORD_LEN.W))
   val trap_code = Output(UInt(WORD_LEN.W))
+  val trap_ret = Output(Bool())
 }
 
 class IdUnit extends Module {
   val io = IO(new Bundle {
     val regfile_rs1 = Flipped(new RegFileReaderIo())
     val regfile_rs2 = Flipped(new RegFileReaderIo())
+    val csrfile_regs_r = Flipped(new CsrReadRegsIo())
     val if2id = Flipped(new If2IdIo())
     val id2if = new Id2IfIo()
     val id2ex = new Id2ExIo()
@@ -72,6 +82,8 @@ class IdUnit extends Module {
     ~0.U(WORD_LEN.W),
     io.if2id.inst_id
   )
+  io.id2ex.out_pc := io.if2id.pc
+  io.id2ex.out_pc_valid := !stall_flg && !io.ex2id.branch_taken
 
   val rs1_addr = inst(19, 15)
   val rs2_addr = inst(24, 20)
@@ -154,10 +166,11 @@ class IdUnit extends Module {
       JALR ->   List( ExFunc.JALR,    Op1Sel.RS1, Op2Sel.IMI, MenSel.X, RenSel.S, WbSel.PC,    CsrCmd.X, AmoSel.X ),
       LUI ->    List( ExFunc.ADD,     Op1Sel.X,   Op2Sel.IMU, MenSel.X, RenSel.S, WbSel.ALU,   CsrCmd.X, AmoSel.X ),
       AUIPC ->  List( ExFunc.ADD,     Op1Sel.PC,  Op2Sel.IMU, MenSel.X, RenSel.S, WbSel.ALU,   CsrCmd.X, AmoSel.X ),
-      ECALL ->  List( ExFunc.ECALL,   Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,     CsrCmd.X, AmoSel.X ),
-      EBREAK -> List( ExFunc.EBREAK,  Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,     CsrCmd.X, AmoSel.X ),
+      ECALL ->  List( ExFunc.X,       Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,     CsrCmd.X, AmoSel.X ),
+      EBREAK -> List( ExFunc.X,       Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,     CsrCmd.X, AmoSel.X ),
       FENCE ->  List( ExFunc.X,       Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,     CsrCmd.X, AmoSel.X ),
-      MRET ->   List( ExFunc.X,       Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,     CsrCmd.X, AmoSel.X ),
+      MRET ->   List( ExFunc.MRET,    Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,     CsrCmd.X, AmoSel.X ),
+      WFI ->    List( ExFunc.X,       Op1Sel.X,   Op2Sel.X,   MenSel.X, RenSel.X, WbSel.X,     CsrCmd.X, AmoSel.X ),
       // Zicsr
       CSRRW ->  List( ExFunc.COPY1,   Op1Sel.RS1, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR,   CsrCmd.W, AmoSel.X ),
       CSRRWI -> List( ExFunc.COPY1,   Op1Sel.IMZ, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.CSR,   CsrCmd.W, AmoSel.X ),
@@ -181,6 +194,7 @@ class IdUnit extends Module {
       AMOSWAPW -> List( ExFunc.COPY1,  Op1Sel.RS1, Op2Sel.X,   MenSel.W, RenSel.S, WbSel.MEMW,  CsrCmd.X, AmoSel.SWAP ),
       LRW ->      List( ExFunc.COPY1,  Op1Sel.RS1, Op2Sel.X,   MenSel.X, RenSel.S, WbSel.MEMW,  CsrCmd.X, AmoSel.LR ),
       SCW ->      List( ExFunc.COPY1,  Op1Sel.RS1, Op2Sel.X,   MenSel.W, RenSel.S, WbSel.SC,    CsrCmd.X, AmoSel.SC ),
+      AMOXORW ->  List( ExFunc.COPY1,  Op1Sel.RS1, Op2Sel.X,   MenSel.W, RenSel.S, WbSel.MEMW,  CsrCmd.X, AmoSel.XOR ),
       AMOORW ->   List( ExFunc.COPY1,  Op1Sel.RS1, Op2Sel.X,   MenSel.W, RenSel.S, WbSel.MEMW,  CsrCmd.X, AmoSel.OR ),
       AMOANDW ->  List( ExFunc.COPY1,  Op1Sel.RS1, Op2Sel.X,   MenSel.W, RenSel.S, WbSel.MEMW,  CsrCmd.X, AmoSel.AND ),
     )
@@ -188,6 +202,10 @@ class IdUnit extends Module {
   val exe_fun :: op1_sel :: op2_sel :: mem_wen :: rf_wen :: wb_sel :: csr_cmd :: amo_sel :: Nil =
     csignals
   // format: on
+
+  when(exe_fun === ExFunc.INVALID) {
+    printf("Illegal instruction: pc = %x, inst = %x\n", io.if2id.pc, inst)
+  }
 
   val op1_data = MuxLookup(op1_sel, 0.U(WORD_LEN.W))(
     Seq(
@@ -209,15 +227,24 @@ class IdUnit extends Module {
 
   val csr_addr = inst(31, 20)
 
+  val mtip = (io.csrfile_regs_r.mip & CsrMipMask.MTIP) =/= 0.U(WORD_LEN.W)
+  val mtie = (io.csrfile_regs_r.mie & CsrMieMask.MTIE) =/= 0.U(WORD_LEN.W)
+  val mie = (io.csrfile_regs_r.mstatus & CsrMstatusMask.MIE) =/= 0.U(WORD_LEN.W)
   val trap_code = MuxCase(
     0.U(WORD_LEN.W),
     Seq(
-      (inst === ECALL) -> EXC_ECALL,
-      (inst === EBREAK) -> EXC_BREAKPOINT
+      (inst === ECALL) -> Mux(
+        io.csrfile_regs_r.priv === CsrPriv.M,
+        EXC_ECALL_M,
+        EXC_ECALL_U
+      ),
+      (inst === EBREAK) -> EXC_BREAKPOINT,
+      (mtip && mtie && mie && !io.ex2id.prev_trap_valid) -> INT_TIMER
     )
   )
   val trap_pc = io.if2id.pc
-  val trap_valid = trap_code =/= 0.U(WORD_LEN.W)
+  val trap_valid = (trap_code =/= 0.U(WORD_LEN.W))
+  val trap_ret = (exe_fun === ExFunc.MRET)
 
   reg_rf_wen := rf_wen
   reg_wb_addr := wb_addr
@@ -247,4 +274,5 @@ class IdUnit extends Module {
   io.id2ex.trap_valid := RegNext(trap_valid)
   io.id2ex.trap_code := RegNext(trap_code)
   io.id2ex.trap_pc := RegNext(trap_pc)
+  io.id2ex.trap_ret := RegNext(trap_ret)
 }

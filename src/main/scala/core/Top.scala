@@ -10,6 +10,7 @@ class Top(memoryFile: String, suppressLog: Boolean) extends Module {
   val io = IO(new Bundle {
     val gp = Output(UInt(WORD_LEN.W))
     val pc = Output(UInt(WORD_LEN.W))
+    val pc_valid = Output(Bool())
     val inst = Output(UInt(WORD_LEN.W))
   })
 
@@ -30,9 +31,11 @@ class Top(memoryFile: String, suppressLog: Boolean) extends Module {
   bus.io.dmem_out_memory <> memory.io.dmem
   bus.io.dmem_out_uart <> uart_memory.io.dmem
   bus.io.dmem_out_clint <> clint_memory.io.dmem
+  bus.io.pc := core.io.pc
   clint_memory.io.csrfile_regs_rw <> csrfile.io.regs_rw
   io.gp := core.io.gp
   io.pc := core.io.pc
+  io.pc_valid := core.io.pc_valid
   io.inst := core.io.inst
 }
 

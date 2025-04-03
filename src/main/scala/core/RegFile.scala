@@ -33,8 +33,8 @@ class RegFile extends Module {
   val regfile = Mem(REG_NUM, UInt(WORD_LEN.W))
 
   when(reset.asBool) {
-    regfile(Registers.R0) := 0.U(WORD_LEN.W)
-    regfile(Registers.R1) := "x_803ffa00".U(WORD_LEN.W)
+    regfile(Registers.R0) := 0.U(WORD_LEN.W) // hart ID
+    regfile(Registers.R1) := 0.U(WORD_LEN.W) // pointer to dtb
   }
 
   io.rs1.data := regfile(io.rs1.addr)

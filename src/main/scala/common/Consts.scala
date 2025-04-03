@@ -6,7 +6,7 @@ import chisel3.util.BitPat
 object ExFunc extends ChiselEnum {
   val X, ADD, SUB, AND, OR, XOR, SLL, SRL, SRA, SLT, SLTU, BEQ, BNE, BLT, BGE,
       BLTU, BGEU, JALR, COPY1, MUL, MULH, MULHU, MULHSU, DIV, DIVU, REM, REMU,
-      ECALL, EBREAK, MRET, INVALID =
+      MRET, INVALID =
     Value
 }
 
@@ -35,7 +35,12 @@ object CsrCmd extends ChiselEnum {
 }
 
 object AmoSel extends ChiselEnum {
-  val X, ADD, SWAP, LR, SC, OR, AND = Value
+  val X, ADD, SWAP, LR, SC, XOR, OR, AND = Value
+}
+
+object CsrPriv extends ChiselEnum {
+  val U = Value(0.U(2.W))
+  val M = Value(3.U(2.W))
 }
 
 object Consts {
@@ -53,7 +58,8 @@ object Consts {
   val CSR_ADDR_LEN = 12
   val CSR_NUM = 1 << CSR_ADDR_LEN
 
-  // Exception Code: Breakpoint = 3
   val EXC_BREAKPOINT = 3.U(WORD_LEN.W)
-  val EXC_ECALL = 11.U(WORD_LEN.W)
+  val EXC_ECALL_U = 8.U(WORD_LEN.W)
+  val EXC_ECALL_M = 11.U(WORD_LEN.W)
+  val INT_TIMER = "x_80000007".U(WORD_LEN.W)
 }

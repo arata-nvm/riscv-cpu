@@ -11,6 +11,7 @@ import core.MenSel
 import common.ExFunc
 import common.AmoSel
 import core.CsrReadRegsIo
+import core.CsrTrapIo
 
 class Ex2IfIo extends Bundle {
   val branch_taken = Output(Bool())
@@ -19,6 +20,7 @@ class Ex2IfIo extends Bundle {
 
 class Ex2IdIo extends Bundle {
   val branch_taken = Output(Bool())
+  val prev_trap_valid = Output(Bool())
 }
 
 class Ex2MeIo extends Bundle {
@@ -38,25 +40,17 @@ class Ex2MeIo extends Bundle {
   val wb_sel = Output(WbSel())
   val wb_addr = Output(UInt(WORD_LEN.W))
   val amo_sel = Output(AmoSel())
-  val trap_valid = Output(Bool())
-  val trap_pc = Output(UInt(WORD_LEN.W))
-  val trap_code = Output(UInt(WORD_LEN.W))
 }
 
 class ExUnit extends Module {
   val io = IO(new Bundle {
     val csrfile_regs_r = Flipped(new CsrReadRegsIo())
+    val csrfile_trap = Flipped(new CsrTrapIo())
     val id2ex = Flipped(new Id2ExIo())
     val ex2if = new Ex2IfIo()
     val ex2id = new Ex2IdIo()
     val ex2me = new Ex2MeIo()
   })
-
-  when(io.id2ex.exe_fun === ExFunc.INVALID) {
-    printf("ExUnit: invalid instruction\n")
-    printf("ExUnit: pc: %x\n", io.id2ex.pc)
-    printf("ExUnit: inst: %x\n", io.id2ex.inst)
-  }
 
   val alu_out = MuxLookup(io.id2ex.exe_fun, 0.U(WORD_LEN.W))(
     Seq(
@@ -127,27 +121,32 @@ class ExUnit extends Module {
   val jmp_flg = (io.id2ex.wb_sel === WbSel.PC)
   val jmp_target = alu_out
 
-  val ecall_flg =
-    (io.id2ex.exe_fun === ExFunc.ECALL || io.id2ex.exe_fun === ExFunc.EBREAK)
-  val ecall_target = io.csrfile_regs_r.mtvec
+  val trap_flg = io.id2ex.trap_valid
+  val trap_target = io.csrfile_regs_r.mtvec & "x_fffffffc".U(WORD_LEN.W)
 
   val mret_flg = (io.id2ex.exe_fun === ExFunc.MRET)
   val mret_target = io.csrfile_regs_r.mepc
 
-  val branch_taken = br_flg || jmp_flg || ecall_flg
+  val branch_taken = br_flg || jmp_flg || trap_flg || mret_flg
   val branch_target = MuxCase(
     0.U(WORD_LEN.W),
     Seq(
       br_flg -> br_target,
       jmp_flg -> jmp_target,
-      ecall_flg -> ecall_target,
+      trap_flg -> trap_target,
       mret_flg -> mret_target
     )
   )
 
+  io.csrfile_trap.valid := io.id2ex.trap_valid && !br_flg && !jmp_flg
+  io.csrfile_trap.ret := io.id2ex.trap_ret && !br_flg && !jmp_flg && !trap_flg
+  io.csrfile_trap.pc := io.id2ex.trap_pc
+  io.csrfile_trap.code := io.id2ex.trap_code
+
   io.ex2if.branch_taken := branch_taken
   io.ex2if.branch_target := branch_target
   io.ex2id.branch_taken := branch_taken
+  io.ex2id.prev_trap_valid := io.id2ex.trap_valid
   io.ex2me.pc := RegNext(io.id2ex.pc)
   io.ex2me.inst := RegNext(io.id2ex.inst)
   io.ex2me.inst_id := RegNext(io.id2ex.inst_id)
@@ -164,7 +163,4 @@ class ExUnit extends Module {
   io.ex2me.wb_sel := RegNext(io.id2ex.wb_sel)
   io.ex2me.wb_addr := RegNext(io.id2ex.wb_addr)
   io.ex2me.amo_sel := RegNext(io.id2ex.amo_sel)
-  io.ex2me.trap_valid := RegNext(io.id2ex.trap_valid)
-  io.ex2me.trap_pc := RegNext(io.id2ex.trap_pc)
-  io.ex2me.trap_code := RegNext(io.id2ex.trap_code)
 }

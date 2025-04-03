@@ -24,6 +24,7 @@ class Bus extends Module {
     val dmem_out_memory = Flipped(new DmemPortIo())
     val dmem_out_uart = Flipped(new DmemPortIo())
     val dmem_out_clint = Flipped(new DmemPortIo())
+    val pc = Input(UInt(WORD_LEN.W))
   })
 
   def addr_to_sel(addr: UInt): MemSel.Type = {
@@ -42,7 +43,8 @@ class Bus extends Module {
 
   when(io.dmem_in.wen =/= MenSel.X && wsel === MemSel.INVALID) {
     printf(
-      "[Bus] Invalid memory write at 0x%x = 0x%x\n",
+      "[Bus] pc=0x%x: Invalid memory write at 0x%x = 0x%x\n",
+      io.pc,
       io.dmem_in.waddr,
       io.dmem_in.wdata
     )

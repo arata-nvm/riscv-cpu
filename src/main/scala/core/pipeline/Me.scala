@@ -30,7 +30,6 @@ class MeUnit extends Module {
   val io = IO(new Bundle {
     val dmem = Flipped(new DmemPortIo())
     val csrfile_command = Flipped(new CsrCommandIo())
-    val csrfile_trap = Flipped(new CsrTrapIo())
     val ex2me = Flipped(new Ex2MeIo())
     val me2id = new Me2IdIo()
     val me2wb = new Me2WbIo()
@@ -63,6 +62,7 @@ class MeUnit extends Module {
     Seq(
       AmoSel.ADD -> (mem_rdata + io.ex2me.rs2_data),
       AmoSel.SWAP -> io.ex2me.rs2_data,
+      AmoSel.XOR -> (mem_rdata ^ io.ex2me.rs2_data),
       AmoSel.OR -> (mem_rdata | io.ex2me.rs2_data),
       AmoSel.AND -> (mem_rdata & io.ex2me.rs2_data)
     )
@@ -85,9 +85,6 @@ class MeUnit extends Module {
   io.csrfile_command.cmd := io.ex2me.csr_cmd
   io.csrfile_command.addr := io.ex2me.csr_addr
   io.csrfile_command.wdata := io.ex2me.op1_data
-  io.csrfile_trap.valid := io.ex2me.trap_valid
-  io.csrfile_trap.pc := io.ex2me.trap_pc
-  io.csrfile_trap.code := io.ex2me.trap_code
 
   io.me2id.rf_wen := io.ex2me.rf_wen
   io.me2id.wb_addr := io.ex2me.wb_addr
