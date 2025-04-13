@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: CI
 
 on: [push, pull_request]
 
@@ -7,13 +7,9 @@ jobs:
     name: ci
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Setup Scala
-        uses: olafurpg/setup-scala@v10
+      - uses: actions/checkout@v4
+      - uses: coursier/cache-action@v6
+      - uses: coursier/setup-action@v1
         with:
-          java-version: adopt@1.8
-      - name: Cache Scala
-        uses: coursier/cache-action@v5
-      - name: Test
-        run: sbt test
+          apps: mill
+      - run: mill app.test.testOnly core.RiscvTests
