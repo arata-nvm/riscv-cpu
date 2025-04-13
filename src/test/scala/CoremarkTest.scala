@@ -6,8 +6,10 @@ import chiseltest.VerilatorBackendAnnotation
 import org.scalatest.flatspec.AnyFlatSpec
 
 class CoremarkTest extends AnyFlatSpec with ChiselScalatestTester {
+  val workspaceRoot = System.getenv("MILL_WORKSPACE_ROOT");
+
   it must "work through coremark" in {
-    test(new Top("src/hex/coremark.hex", true))
+    test(new Top(workspaceRoot + "/src/hex/coremark.hex", true))
       .withAnnotations(Seq(VerilatorBackendAnnotation))
       .runPeekPoke { c =>
         new PeekPokeTester(c) {

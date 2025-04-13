@@ -7,10 +7,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import java.io.PrintWriter
 
 class LinuxTest extends AnyFlatSpec with ChiselScalatestTester {
+  val workspaceRoot = System.getenv("MILL_WORKSPACE_ROOT");
+
   it must "work through linux" in {
     val writer = new PrintWriter("exec.log")
 
-    test(new Top("src/hex/linux.hex", true))
+    test(new Top(workspaceRoot + "/src/hex/linux.hex", true))
       .withAnnotations(Seq(VerilatorBackendAnnotation))
       .runPeekPoke { c =>
         new PeekPokeTester(c) {

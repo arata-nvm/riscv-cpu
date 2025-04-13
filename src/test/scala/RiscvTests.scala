@@ -9,7 +9,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import chiseltest.iotesters.PeekPokeTester
 
 class RiscvTests extends AnyFlatSpec with ChiselScalatestTester {
-  val hexDir = "src/hex/riscv-tests/"
+  val workspaceRoot = System.getenv("MILL_WORKSPACE_ROOT");
+  val hexDir = workspaceRoot + "/src/hex/riscv-tests/"
 
   val memoryFiles = Seq(
     // // RV32I
@@ -95,7 +96,6 @@ class RiscvTests extends AnyFlatSpec with ChiselScalatestTester {
               assert(cycles <= 100000, "timeout")
               step(1)
               cycles += 1
-              // Console.printf("pc: %08x\n", peek(c.io.pc).toInt)
             }
             expect(c.io.gp, 1)
           }
