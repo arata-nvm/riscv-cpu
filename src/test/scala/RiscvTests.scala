@@ -9,7 +9,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import chiseltest.iotesters.PeekPokeTester
 
 class RiscvTests extends AnyFlatSpec with ChiselScalatestTester {
-  val workspaceRoot = System.getenv("MILL_WORKSPACE_ROOT");
+  val workspaceRoot = Option(System.getenv("MILL_WORKSPACE_ROOT")).getOrElse(".")
   val hexDir = workspaceRoot + "/src/hex/riscv-tests/"
 
   val memoryFiles = Seq(
